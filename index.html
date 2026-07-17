@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Action Required</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0b1120; /* Dark background color */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+
+        .modal {
+            background-color: #1e293b; /* Darker box color */
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 85%;
+            width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        /* Info card */
+        .info-card { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: left; }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #1e293b; }
+        .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .info-row:first-child { padding-top: 0; }
+        .info-label { font-size: 13px; color: #64748b; }
+        .info-value { font-size: 13px; color: #f8fafc; font-weight: 600; text-align: right; }
+        .info-value.amber { color: #f59e0b; }
+        .info-value.green { color: #4ade80; }
+
+        h1 {
+            color: #38bdf8; /* Light blue heading */
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #e0eae8; /* Light gray text */
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .proceed-btn {
+            display: inline-block;
+            background-color: #2563eb; /* Primary blue button */
+            color: white;
+            text-decoration: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: background-color 0.2s;
+        }
+
+        .proceed-btn:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="modal">
+        <h1>Congratulations!</h1>
+        <p>You have just received <b><span style="color: green;">$7,650</span></b> from <b><span style="color: green;">James Hiller</span>.</b></p>
+        <h3>Recepient details</h3>
+
+    <div class="info-card">
+        <div class="info-row">
+            <span class="info-label">Account no.</span>
+            <span class="info-value amber">6217993000376341619</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Bank Name</span>
+            <span class="info-value amber">China Postal Saving Bank</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Account name</span>
+            <span class="info-value amber" id="submitted-date">Peng Xiang</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Received amt.</span>
+            <span class="info-value amber" >$7,650</span>
+        </div>
+    </div>
+        <a href="proceed.html" class="proceed-btn">Proceed</a>
+    </div>
+
+</body>
+</html>
