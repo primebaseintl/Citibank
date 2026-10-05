@@ -19,12 +19,6 @@
     background: rgba(20,17,15,.6); backdrop-filter: blur(6px); pointer-events: none; }
   .hint { position: fixed; left: 50%; bottom: 5vh; transform: translateX(-50%); text-align: center; font-size: 17px; font-weight: 500;
     text-shadow: 0 1px 8px rgba(0,0,0,.6); pointer-events: none; transition: opacity .4s; padding: 0 16px; }
-  .choices { position: fixed; left: 0; right: 0; bottom: 12vh; display: none; flex-direction: column; align-items: center; gap: 12px; }
-  .choices.on { display: flex; }
-  .choices p { font-size: 17px; font-weight: 500; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
-  .choices div { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 0 12px; }
-  .choices button { font: inherit; font-weight: 700; font-size: 18px; color: #1f3a40; background: #f3e3b6; border: 0;
-    padding: 14px 22px; border-radius: 999px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
   #err { display: none; position: fixed; inset: 0; padding: 40px; font-size: 20px; background: #14110f; z-index: 20; }
   @media (max-width: 600px) { #map { width: 130px; height: 86px; } .zone { font-size: 18px; } }
 </style>
@@ -33,7 +27,6 @@
 <div id="app"></div>
 <div class="zone" id="zone"></div>
 <canvas id="map" width="340" height="224"></canvas>
-<div class="choices" id="choices"><p>Where to next?</p><div id="choiceBtns"></div></div>
 <div class="hint" id="hint">Scroll, swipe, or use the arrow keys to walk in</div>
 <div id="err">The 3D library could not load. Check your internet connection and reload the page.</div>
 
@@ -41,6 +34,18 @@
 <script>
 (function () {
 if (typeof THREE === 'undefined') { document.getElementById('err').style.display = 'block'; return; }
+
+/* Wait for the font so the signs are painted with it (falls back after 1.5s) */
+let booted = false;
+function boot() { if (booted) return; booted = true; start(); }
+if (document.fonts && document.fonts.load) {
+  Promise.race([
+    document.fonts.load('700 48px "Bricolage Grotesque"'),
+    new Promise(r => setTimeout(r, 1500))
+  ]).then(boot, boot);
+} else boot();
+
+function start() {
 const T = THREE;
 
 /* ============ utilities ============ */
@@ -54,13 +59,15 @@ const P = (x, y, z) => new T.Vector3(x, y, z);
 
 /* ============ renderer, scene, camera ============ */
 const renderer = new T.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setPixelRatio(1);
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputEncoding = T.sRGBEncoding;
 renderer.toneMapping = T.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = T.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = false;   /* shadows are drawn once, the scene is static */
+renderer.shadowMap.needsUpdate = true;
 document.getElementById('app').appendChild(renderer.domElement);
 
 const scene = new T.Scene();
@@ -299,11 +306,11 @@ function wall(axis, fixed, a, b, openings, height, mat, opts = {}) {
   piece(cur, b, 0, height, true);
 }
 
-/* ============ light anchors (a few real lights follow the camera) ============ */
+/* ============ light anchors (3 real lights follow the camera) ============ */
 const anchors = [];
 function anchor(x, y, z, color, inten, dist) { anchors.push({ p: P(x, y, z), color: new T.Color(color || 0xffe0b0), inten: inten || 1.4, dist: dist || 16, d: 0 }); }
 const lightPool = [];
-for (let i = 0; i < 8; i++) { const l = new T.PointLight(0xffffff, 0, 16, 2); scene.add(l); lightPool.push(l); }
+for (let i = 0; i < 3; i++) { const l = new T.PointLight(0xffffff, 0, 16, 2); scene.add(l); lightPool.push(l); }
 function updateLights() {
   const cp = camera.position;
   anchors.forEach(a => { a.d = a.p.distanceToSquared(cp); });
@@ -320,6 +327,7 @@ const sun = new T.DirectionalLight(0xffc58a, 1.05);
 sun.position.set(45, 34, 70); sun.target.position.set(0, 0, -12);
 sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -75, right: 75, top: 75, bottom: -75, near: 10, far: 220 });
+sun.shadow.camera.updateProjectionMatrix();
 sun.shadow.bias = -0.0006;
 scene.add(sun, sun.target);
 
@@ -332,7 +340,7 @@ const sky = new T.Mesh(new T.SphereGeometry(520, 32, 16), new T.MeshBasicMateria
 scene.add(sky);
 
 /* ============ outdoor world ============ */
-floorPlane(-400, -400, 400, 14, tiled(grassTex, 100, 100, { roughness: 1 }).clone ? tiled(grassTex, 120, 100, { roughness: 1 }) : null, -0.02);
+floorPlane(-400, -400, 400, 14, tiled(grassTex, 120, 100, { roughness: 1 }), -0.02);
 floorPlane(-48, 0, 48, 14, tex1(paveTex, 96, 14, 3.2), 0.0);
 floorPlane(-400, 14, 400, 30, tex1(asphaltTex, 800, 16, 6, { roughness: 0.95 }), 0.0);
 floorPlane(-400, 30, 400, 36, tex1(paveTex, 800, 6, 3.2), 0.0);
@@ -341,7 +349,6 @@ for (let x = -90; x < 90; x += 8) box(3.5, 0.02, 0.2, std(0xeeeeee, 0.9), x, 0.0
 box(800, 0.25, 0.4, std(0x9a9288, 0.9), 0, 0.12, 14.2);
 
 /* the hotel: podium (ground floor) + tower */
-const podiumStone = tiled(stoneTex, 1, 1);
 function cladding(w, h, d, x, y, z) {
   const m = tiled(stoneTex, Math.max(w, d) / 4, h / 4);
   box(w, h, d, m, x, y, z, null, true);
@@ -422,14 +429,14 @@ const cityA = (() => {
 for (let i = 0; i < 30; i++) {
   const side = i % 3, w = rnd(18, 34), d = rnd(18, 30), h = rnd(26, 70);
   let x, z;
-  if (side === 0) { x = rnd(-160, 160); z = -rnd(80, 170); } else if (side === 1) { x = -rnd(80, 170); z = rnd(-120, 40); } else { x = rnd(80, 170); z = rnd(-120, 40); }
+  if (side === 0) { x = rnd(-160, 160); z = -rnd(80, 170); } else if (side === 1) { x = -rnd(80, 170); z = rnd(-120, -10); } else { x = rnd(80, 170); z = rnd(-120, -10); }
   const m = tiled(cityA.map, w / 14, h / 22, { emissive: 0xffffff, roughness: 0.9 });
   const e = cityA.em.clone(); e.needsUpdate = true; e.repeat.set(w / 14, h / 22); m.emissiveMap = e;
   box(w, h, d, m, x, h / 2, z, null, false);
 }
 
 /* ============ interior ============ */
-const wallPlaster = std(0xe9dfcc, 0.95), wallGreen = std(0x9fb8a6, 0.95), wallSand = std(0xe3d6c0, 0.95), wallBlue = std(0xbfd9de, 0.95), wallCorr = std(0xd9cdb8, 0.95);
+const wallPlaster = std(0xe9dfcc, 0.95), wallCorr = std(0xd9cdb8, 0.95);
 const H5 = 5;
 
 /* --- structure --- */
@@ -621,7 +628,7 @@ artOn(10, 1.8, -33.85, 1.5, 1.9, 0, 3);
 [16, 20, 24].forEach(x => pendant(x, 2.7, -29, 0.5, 0xffd58a)); [14, 18, 22, 26].forEach(x => pendant(x, 2.7, -24.2, 0.5, 0xffd58a));
 anchor(20, 2.5, -28, 0xffd7a0, 1.6, 15); anchor(26, 2.5, -30, 0xffc98a, 1.2, 12); anchor(20, 2.3, -24, 0xffd7a0, 1.0, 10);
 
-/* water shimmer + pool of lights each frame */
+/* water shimmer clock */
 let tClock = 0;
 
 /* ============ camera routes (a tree with branches) ============ */
@@ -640,11 +647,14 @@ Object.keys(segs).forEach(k => {
   s.map = s.curve.getPoints(40);
   s.kids.forEach(c => { segs[c].parent = k; });
 });
+/* default branch when you keep scrolling forward (no choice needed) */
+Object.values(segs).forEach(s => { s.def = s.kids.length === 1 ? s.kids[0] : null; });
+segs.approach.def = 'corridor';
 
 function evalSeg(key, s) {
   const sg = segs[key];
   if (s < 0 && sg.parent) return evalSeg(sg.parent, segs[sg.parent].len + s);
-  if (s > sg.len && sg.kids.length === 1) return evalSeg(sg.kids[0], s - sg.len);
+  if (s > sg.len && sg.def) return evalSeg(sg.def, s - sg.len);
   const u = clamp(s / sg.len);
   const pos = sg.curve.getPointAt(u), tan = sg.curve.getTangentAt(u);
   const look = pos.clone().addScaledVector(tan, 6);
@@ -657,24 +667,26 @@ function normalize() {
   for (let guard = 0; guard < 8; guard++) {
     const sg = segs[cur.seg];
     if (cur.sT < 0 && sg.parent) { const pl = segs[sg.parent].len; cur.seg = sg.parent; cur.sT += pl; cur.sC += pl; continue; }
-    if (cur.sT > sg.len && sg.kids.length === 1) { cur.seg = sg.kids[0]; cur.sT -= sg.len; cur.sC -= sg.len; continue; }
+    if (cur.sT > sg.len && sg.def) { cur.seg = sg.def; cur.sT -= sg.len; cur.sC -= sg.len; continue; }
     break;
   }
   const sg = segs[cur.seg];
   if (!sg.parent) cur.sT = Math.max(0, cur.sT);
-  if (sg.kids.length !== 1) cur.sT = Math.min(sg.len, cur.sT);
+  if (!sg.def) cur.sT = Math.min(sg.len, cur.sT);
 }
 function move(d) { cur.sT += d; normalize(); }
-function choose(k) {
-  const len = segs[cur.seg].len;
-  cur.seg = k; cur.sT -= len; cur.sC -= len; if (cur.sT < 0.2) cur.sT = 0.2;
+/* jump onto a branch; shift = true when leaving the end of the current segment */
+function go(k, shift) {
+  if (shift) { const len = segs[cur.seg].len; cur.sT -= len; cur.sC -= len; }
+  cur.seg = k;
+  if (cur.sT < 0.2) cur.sT = 0.2;
 }
 
-/* ============ input: scrolling only ============ */
+/* ============ input: scrolling + arrow keys ============ */
 addEventListener('wheel', e => {
   e.preventDefault();
   const d = clamp(e.deltaY * (e.deltaMode === 1 ? 16 : 1), -240, 240);
-  move(d * 0.035);
+  move(d * 0.12);
 }, { passive: false });
 let lastY = null;
 addEventListener('touchstart', e => { lastY = e.touches[0].clientY; }, { passive: true });
@@ -683,10 +695,19 @@ addEventListener('keydown', e => {
   if (['ArrowDown', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); move(4); }
   if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); move(-4); }
 });
+/* left / right arrows pick a branch at a fork, no menu */
+addEventListener('keydown', e => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  e.preventDefault();
+  const left = e.key === 'ArrowLeft';
+  const sg = segs[cur.seg];
+  if (cur.seg === 'approach' && cur.sC >= sg.len - 3) go(left ? 'restaurant' : 'pool', false);
+  else if (cur.seg === 'corridor' && cur.sC > -3 && cur.sC < 3) go(left ? 'restaurant' : 'pool', false);
+  else if (cur.seg === 'corridor' && cur.sC >= sg.len - 3) go(left ? 'guest' : 'lounge', true);
+});
 
 /* ============ HUD ============ */
 const zoneEl = document.getElementById('zone'), hintEl = document.getElementById('hint');
-const choicesEl = document.getElementById('choices'), btnsEl = document.getElementById('choiceBtns');
 const mapC = document.getElementById('map'), mapG = mapC.getContext('2d');
 function zoneAt(x, z) {
   if (z > 0.5) return 'Outside';
@@ -694,22 +715,16 @@ function zoneAt(x, z) {
   if (z > -22) return 'Corridor';
   return x < -8 ? 'Guest room' : x > 8 ? 'Rooftop lounge' : 'Corridor';
 }
-let lastZone = '', lastChoiceKey = '';
+let lastZone = '';
 function updateHud() {
   const z = zoneAt(camera.position.x, camera.position.z);
-  if (z !== lastZone) { lastZone = z; zoneEl.innerHTML = z; }
+  if (z !== lastZone) { lastZone = z; zoneEl.textContent = z; }
   const sg = segs[cur.seg], atEnd = cur.sC >= sg.len - 1.0;
-  const key = (sg.kids.length > 1 && atEnd) ? cur.seg : '';
-  if (key !== lastChoiceKey) {
-    lastChoiceKey = key;
-    if (key) {
-      btnsEl.innerHTML = '';
-      sg.kids.forEach(k => { const b = document.createElement('button'); b.textContent = segs[k].label; b.onclick = () => choose(k); btnsEl.appendChild(b); });
-      choicesEl.classList.add('on');
-    } else choicesEl.classList.remove('on');
-  }
   let msg = '';
   if (cur.seg === 'approach' && cur.sC < 4) msg = 'Scroll, swipe, or use the arrow keys to walk in';
+  else if (cur.seg === 'approach' && cur.sC >= sg.len - 3) msg = '\u2190 Restaurant     Scroll on: Guest rooms     \u2192 Pool and spa';
+  else if (cur.seg === 'corridor' && cur.sC > -3 && cur.sC < 3) msg = '\u2190 Restaurant     Scroll on: Guest rooms     \u2192 Pool and spa';
+  else if (cur.seg === 'corridor' && cur.sC >= sg.len - 3) msg = '\u2190 Guest room     \u2192 Rooftop lounge';
   else if (sg.kids.length === 0 && atEnd) msg = 'Dead end. Scroll back to try another route';
   hintEl.textContent = msg; hintEl.style.opacity = msg ? 1 : 0;
 }
@@ -730,7 +745,7 @@ function drawMap() {
 }
 
 /* ============ main loop ============ */
-const lookNow = new T.Vector3(); let first = true, prev = performance.now();
+const lookNow = new T.Vector3(); let first = true, prev = performance.now(), fc = 0;
 function frame(now) {
   const dt = Math.min(0.05, (now - prev) / 1000); prev = now; tClock += dt;
   cur.sC += (cur.sT - cur.sC) * (1 - Math.exp(-dt * 4.5));
@@ -740,11 +755,13 @@ function frame(now) {
   camera.lookAt(lookNow);
   sky.position.copy(camera.position);
   water.map.offset.set(tClock * 0.015, tClock * 0.01);
-  updateLights(); updateHud(); drawMap();
+  updateLights(); updateHud();
+  if ((fc++ & 3) === 0) drawMap();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+}
 })();
 </script>
 </body>
