@@ -11,7 +11,9 @@
     font-family: "Bricolage Grotesque", system-ui, sans-serif; color: #fff; }
   #app { position: fixed; inset: 0; }
   canvas { display: block; }
-  /* Mouse movement does nothing. Only scrolling (wheel, swipe, arrow keys) moves you. */
+  #app canvas { cursor: grab; }
+  #app canvas:active { cursor: grabbing; }
+  /* Scroll, swipe or arrow keys walk you. Drag (mouse) or Look mode (touch) turns your head. */
   .zone { position: fixed; left: 20px; top: 18px; padding: 10px 16px; border-radius: 12px;
     background: rgba(20,17,15,.6); backdrop-filter: blur(6px); font-size: 22px; font-weight: 700; letter-spacing: -.02em; pointer-events: none; }
   .zone small { display: block; font-size: 13px; font-weight: 500; opacity: .7; letter-spacing: 0; }
@@ -19,6 +21,11 @@
     background: rgba(20,17,15,.6); backdrop-filter: blur(6px); pointer-events: none; }
   .hint { position: fixed; left: 50%; bottom: 5vh; transform: translateX(-50%); text-align: center; font-size: 17px; font-weight: 500;
     text-shadow: 0 1px 8px rgba(0,0,0,.6); pointer-events: none; transition: opacity .4s; padding: 0 16px; }
+  #mode { position: fixed; left: 16px; bottom: calc(5vh + 44px); padding: 10px 14px; border: 0; border-radius: 12px;
+    background: rgba(20,17,15,.65); backdrop-filter: blur(6px); color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 700; z-index: 5; }
+  #mode.on { background: #c9a24a; color: #14110f; }
+  @media (hover: hover) and (pointer: fine) { #mode { display: none; } }
   #err { display: none; position: fixed; inset: 0; padding: 40px; font-size: 20px; background: #14110f; z-index: 20; }
   @media (max-width: 600px) { #map { width: 130px; height: 86px; } .zone { font-size: 18px; } }
 </style>
@@ -28,6 +35,7 @@
 <div class="zone" id="zone"></div>
 <canvas id="map" width="340" height="224"></canvas>
 <div class="hint" id="hint">Scroll, swipe, or use the arrow keys to walk in</div>
+<button id="mode">Mode: Walk</button>
 <div id="err">The 3D library could not load. Check your internet connection and reload the page.</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -674,7 +682,20 @@ function normalize() {
   if (!sg.parent) cur.sT = Math.max(0, cur.sT);
   if (!sg.def) cur.sT = Math.min(sg.len, cur.sT);
 }
-function move(d) { cur.sT += d; normalize(); }
+
+/* ============ look-around (head turn on top of the walking path) ============ */
+const UP = P(0, 1, 0);
+let yawT = 0, yawC = 0, pitchT = 0, pitchC = 0, lookMode = false, dragging = false;
+function move(d) {
+  cur.sT += d; normalize();
+  /* the view eases back to straight ahead while you walk */
+  const k = Math.exp(-Math.abs(d) * 0.05); yawT *= k; pitchT *= k;
+}
+function look(dx, dy) {
+  yawT += dx * 0.005;
+  yawT = Math.atan2(Math.sin(yawT), Math.cos(yawT));   /* free 360 degree turn */
+  pitchT = clamp(pitchT + dy * 0.004, -1.2, 1.2);
+}
 /* jump onto a branch; shift = true when leaving the end of the current segment */
 function go(k, shift) {
   if (shift) { const len = segs[cur.seg].len; cur.sT -= len; cur.sC -= len; }
@@ -682,20 +703,41 @@ function go(k, shift) {
   if (cur.sT < 0.2) cur.sT = 0.2;
 }
 
-/* ============ input: scrolling + arrow keys ============ */
+/* ============ input ============ */
+/* walking: wheel, swipe, up/down arrows */
 addEventListener('wheel', e => {
   e.preventDefault();
   const d = clamp(e.deltaY * (e.deltaMode === 1 ? 16 : 1), -240, 240);
   move(d * 0.12);
 }, { passive: false });
-let lastY = null;
-addEventListener('touchstart', e => { lastY = e.touches[0].clientY; }, { passive: true });
-addEventListener('touchmove', e => { e.preventDefault(); const y = e.touches[0].clientY; if (lastY !== null) move((lastY - y) * 0.07); lastY = y; }, { passive: false });
+
+/* looking with a mouse: click and drag */
+addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.target === renderer.domElement) dragging = true; });
+addEventListener('pointermove', e => { if (dragging && e.pointerType === 'mouse') look(e.movementX, e.movementY); });
+addEventListener('pointerup', () => { dragging = false; });
+addEventListener('pointercancel', () => { dragging = false; });
+
+/* touch: Walk mode swipes to walk, Look mode drags to look around */
+const modeBtn = document.getElementById('mode');
+modeBtn.addEventListener('click', () => {
+  lookMode = !lookMode;
+  modeBtn.textContent = 'Mode: ' + (lookMode ? 'Look' : 'Walk');
+  modeBtn.classList.toggle('on', lookMode);
+});
+let lastX = null, lastY = null;
+addEventListener('touchstart', e => { lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }, { passive: true });
+addEventListener('touchmove', e => {
+  e.preventDefault();
+  const x = e.touches[0].clientX, y = e.touches[0].clientY;
+  if (lastY !== null) { if (lookMode) look(x - lastX, y - lastY); else move((lastY - y) * 0.07); }
+  lastX = x; lastY = y;
+}, { passive: false });
+
 addEventListener('keydown', e => {
   if (['ArrowDown', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); move(4); }
   if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); move(-4); }
 });
-/* left / right arrows pick a branch at a fork, no menu */
+/* left / right arrows pick a branch at a fork; anywhere else they turn your head */
 addEventListener('keydown', e => {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
   e.preventDefault();
@@ -704,6 +746,7 @@ addEventListener('keydown', e => {
   if (cur.seg === 'approach' && cur.sC >= sg.len - 3) go(left ? 'restaurant' : 'pool', false);
   else if (cur.seg === 'corridor' && cur.sC > -3 && cur.sC < 3) go(left ? 'restaurant' : 'pool', false);
   else if (cur.seg === 'corridor' && cur.sC >= sg.len - 3) go(left ? 'guest' : 'lounge', true);
+  else look(left ? 60 : -60, 0);
 });
 
 /* ============ HUD ============ */
@@ -721,11 +764,11 @@ function updateHud() {
   if (z !== lastZone) { lastZone = z; zoneEl.textContent = z; }
   const sg = segs[cur.seg], atEnd = cur.sC >= sg.len - 1.0;
   let msg = '';
-  if (cur.seg === 'approach' && cur.sC < 4) msg = 'Scroll, swipe, or use the arrow keys to walk in';
+  if (cur.seg === 'approach' && cur.sC < 4) msg = 'Scroll to walk in. Drag to look around';
   else if (cur.seg === 'approach' && cur.sC >= sg.len - 3) msg = '\u2190 Restaurant     Scroll on: Guest rooms     \u2192 Pool and spa';
   else if (cur.seg === 'corridor' && cur.sC > -3 && cur.sC < 3) msg = '\u2190 Restaurant     Scroll on: Guest rooms     \u2192 Pool and spa';
   else if (cur.seg === 'corridor' && cur.sC >= sg.len - 3) msg = '\u2190 Guest room     \u2192 Rooftop lounge';
-  else if (sg.kids.length === 0 && atEnd) msg = 'Dead end. Scroll back to try another route';
+  else if (sg.kids.length === 0 && atEnd) msg = 'Drag to look around. Scroll back to try another route';
   hintEl.textContent = msg; hintEl.style.opacity = msg ? 1 : 0;
 }
 const rooms = [[-10, -16, 10, 0, '#6d6355'], [-30, -16, -10, 0, '#5a4a3a'], [10, -16, 30, 0, '#3f6d7a'], [-30, -22, 30, -16, '#4a4f59'], [-30, -34, -8, -22, '#5b5646'], [8, -34, 30, -22, '#6a4f3d'], [-8, -34, 8, -22, '#35373c']];
@@ -752,7 +795,16 @@ function frame(now) {
   const pose = evalSeg(cur.seg, cur.sC);
   camera.position.copy(pose.pos);
   if (first) { lookNow.copy(pose.look); first = false; } else lookNow.lerp(pose.look, 1 - Math.exp(-dt * 5));
-  camera.lookAt(lookNow);
+
+  /* smooth head turn, then aim the camera */
+  let da = yawT - yawC; da = Math.atan2(Math.sin(da), Math.cos(da));
+  yawC += da * (1 - Math.exp(-dt * 8));
+  pitchC += (pitchT - pitchC) * (1 - Math.exp(-dt * 8));
+  const dir = lookNow.clone().sub(pose.pos).normalize();
+  dir.applyAxisAngle(UP, yawC);
+  dir.applyAxisAngle(new T.Vector3().crossVectors(dir, UP).normalize(), pitchC);
+  camera.lookAt(pose.pos.clone().add(dir));
+
   sky.position.copy(camera.position);
   water.map.offset.set(tClock * 0.015, tClock * 0.01);
   updateLights(); updateHud();
