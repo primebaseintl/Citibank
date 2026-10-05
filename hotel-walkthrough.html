@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harbor Hotel walkthrough</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* Moving the mouse does nothing. Only scrolling drives the page. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #14110f; font-family: "Bricolage Grotesque", system-ui, sans-serif; }
+  .scroller { height: 800vh; }
+  .stage { position: fixed; inset: 0; overflow: hidden; background: #14110f; }
+
+  /* ---------- Exterior ---------- */
+  .exterior {
+    position: absolute; inset: 0; z-index: 3;
+    background: linear-gradient(#27375f 0%, #6b6fa0 38%, #f2b27a 72%, #f7d9a0 100%);
+  }
+  .sun {
+    position: absolute; left: 14%; top: 58%; width: 90px; height: 90px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #fff3c4, #ffc36b);
+  }
+  .house {
+    position: absolute; left: 50%; top: 50%; width: 800px; height: 600px;
+    transform-origin: 400px 470px; will-change: transform;
+  }
+  .house > div { position: absolute; }
+  .ground { left: -3000px; width: 6800px; top: 545px; height: 4000px; background: #2f4a3f; }
+  .path { left: 340px; top: 545px; width: 120px; height: 60px; background: #d9c7a1; clip-path: polygon(25% 0, 75% 0, 100% 100%, 0 100%); }
+  .trunk { width: 16px; height: 130px; background: #5a4132; top: 415px; }
+  .canopy { width: 120px; height: 120px; border-radius: 50%; background: #365d4a; top: 310px; }
+  .chimney { left: 490px; top: 150px; width: 36px; height: 100px; background: #7b5a4a; }
+  .body { left: 200px; top: 280px; width: 400px; height: 265px; background: #eadcc2;
+    background-image: repeating-linear-gradient(180deg, transparent 0 22px, rgba(0,0,0,.05) 22px 24px); }
+  .roof { left: 160px; top: 120px; width: 480px; height: 170px; background: #2d4650;
+    background-image: repeating-linear-gradient(180deg, transparent 0 16px, rgba(0,0,0,.18) 16px 18px);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .hwin { top: 340px; width: 92px; height: 92px; background: #ffd27a; border: 8px solid #fbf6ec;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.1); }
+  .hwin::before, .hwin::after { content: ""; position: absolute; background: #fbf6ec; }
+  .hwin::before { left: 50%; top: 0; bottom: 0; width: 6px; margin-left: -3px; }
+  .hwin::after { top: 50%; left: 0; right: 0; height: 6px; margin-top: -3px; }
+  .frame { left: 343px; top: 383px; width: 114px; height: 162px; background: #fbf6ec; }
+  .doorway { left: 355px; top: 395px; width: 90px; height: 150px; perspective: 500px;
+    background: linear-gradient(#ffe2a8, #d9904e); }
+  .door { position: absolute; inset: 0; background: #d79a2b; transform-origin: 0 50%; will-change: transform;
+    box-shadow: inset 0 0 0 6px rgba(0,0,0,.08); }
+  .door::before { content: ""; position: absolute; left: 14px; right: 14px; top: 14px; height: 52px; border: 3px solid rgba(0,0,0,.12); }
+  .door::after { content: ""; position: absolute; right: 10px; top: 76px; width: 9px; height: 9px; border-radius: 50%; background: #5b3d12; }
+
+
+  /* hotel exterior */
+  .path { background: #1f3a40; }
+  .hbody { left: 110px; top: 160px; width: 580px; height: 385px; background: #e9e2d3;
+    background-image: repeating-linear-gradient(90deg, transparent 0 96px, rgba(0,0,0,.05) 96px 98px); }
+  .hroof { left: 100px; top: 140px; width: 600px; height: 22px; background: #1f3a40; }
+  .hsign { left: 300px; top: 84px; width: 200px; height: 56px; background: #1f3a40; color: #e8c46a; text-align: center;
+    font-weight: 700; font-size: 38px; line-height: 56px; letter-spacing: .18em; padding-left: .18em; }
+  .hwindows { left: 140px; top: 190px; width: 520px; height: 250px; background: repeating-linear-gradient(90deg, #ffd27a 0 54px, transparent 54px 87px);
+    -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 52px, transparent 52px 83px);
+            mask-image: repeating-linear-gradient(180deg, #000 0 52px, transparent 52px 83px); }
+  .lobbywin { top: 455px; width: 180px; height: 90px; background: linear-gradient(#ffe2a8, #e0a35a); border: 6px solid #1f3a40; }
+  .canopy2 { left: 305px; top: 358px; width: 190px; height: 20px; background: #1f3a40; box-shadow: 0 6px 0 #c9a24a; }
+  .frame { background: #1f3a40; }
+  .door { background: rgba(160, 205, 215, .55); border: 6px solid #c9a24a; box-shadow: none; }
+  .door::before { left: 50%; right: auto; top: 0; bottom: 0; width: 4px; margin-left: -2px; height: auto; border: 0; background: #c9a24a; }
+  .door::after { right: 12px; top: 72px; background: #c9a24a; }
+
+  /* hotel interior pieces */
+  .sofa { background: var(--c, #476a6b); }
+  .sofa::before { background: var(--c2, #5b8384); }
+  .plant::before { content: ""; position: absolute; left: 0; right: 0; top: 0; bottom: 30%; background: radial-gradient(ellipse at 50% 60%, #3f7a54, #2a5a3c); border-radius: 50% 50% 40% 40%; }
+  .plant::after { content: ""; position: absolute; left: 25%; right: 25%; bottom: 0; height: 30%; background: #8a4b32; border-radius: 4px 4px 10px 10px; }
+  .sign { display: flex; align-items: center; font-weight: 700; font-size: 34px; color: #1f3a40; letter-spacing: -.02em; }
+  .lounger { background: #f6f1e7; border: 6px solid #1f3a40; border-radius: 10px 50px 6px 6px; }
+
+  /* ---------- Interior ---------- */
+  .interior-wrap { position: absolute; inset: 0; z-index: 1; visibility: hidden; transform-origin: 50% 50%; }
+  .interior { position: absolute; inset: 0; perspective: 900px; }
+  .world { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform; }
+  .room {
+    position: absolute; left: 50%; top: 50%; width: 1000px; height: 600px; margin: -300px 0 0 -500px;
+    transform-style: preserve-3d;
+  }
+  .face { position: absolute; overflow: hidden; }
+  .floor { left: 0; top: 600px; width: 1000px; height: 1100px; transform-origin: 50% 0; transform: rotateX(-90deg); }
+  .ceil  { left: 0; top: -1100px; width: 1000px; height: 1100px; transform-origin: 50% 100%; transform: rotateX(90deg); }
+  .lw    { left: 0; top: 0; width: 1100px; height: 600px; transform-origin: 0 50%; transform: rotateY(90deg); }
+  .rw    { left: -100px; top: 0; width: 1100px; height: 600px; transform-origin: 100% 50%; transform: rotateY(-90deg); }
+  .bw    { transform: translateZ(-1100px); background: var(--wall); }
+  .bw.l  { left: 0; top: 0; width: 340px; height: 600px; }
+  .bw.r  { left: 660px; top: 0; width: 340px; height: 600px; }
+  .bw.t  { left: 340px; top: 0; width: 320px; height: 160px; display: flex; align-items: center; justify-content: center;
+           text-align: center; font-weight: 700; font-size: 40px; color: rgba(0,0,0,.55); letter-spacing: -.02em; }
+  .bw.full { left: 0; top: 0; width: 1000px; height: 600px; display: flex; align-items: center; justify-content: center;
+           text-align: center; padding: 0 120px; font-weight: 700; font-size: 64px; line-height: 1.05; color: rgba(0,0,0,.6); letter-spacing: -.03em; }
+  .bw::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.14); pointer-events: none; }
+  .bw.t::after, .bw.full::after { background: rgba(0,0,0,.06); }
+  .wall { background: var(--wall); }
+  .lw::before, .rw::before { content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+  .lw::before { background: linear-gradient(90deg, rgba(255,255,255,.12), rgba(0,0,0,.38)); }
+  .rw::before { background: linear-gradient(270deg, rgba(255,255,255,.12), rgba(0,0,0,.38)); }
+  .lw::after, .rw::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: rgba(0,0,0,.18); z-index: 4; }
+  .shade { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+  .floor .shade { background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.4)); }
+  .ceil .shade { background: linear-gradient(to top, rgba(0,0,0,.4), rgba(255,255,255,.06)); }
+  .face > * { position: absolute; }
+  .face > .shade { position: absolute; }
+
+  /* wall furniture, drawn as flat elevations */
+  .win { background: linear-gradient(#9cc6e8, #e9d9b0); border: 10px solid #fbf6ec; }
+  .win::before, .win::after { content: ""; position: absolute; background: #fbf6ec; }
+  .win::before { left: 50%; top: 0; bottom: 0; width: 8px; margin-left: -4px; }
+  .win::after { top: 50%; left: 0; right: 0; height: 8px; margin-top: -4px; }
+  .art { border: 8px solid #fbf6ec; box-shadow: 0 6px 14px rgba(0,0,0,.2); }
+  .sofa { background: #476a6b; border-radius: 34px 34px 10px 10px; }
+  .sofa::before { content: ""; position: absolute; left: 7%; right: 7%; bottom: 0; height: 48%; background: #5b8384; border-radius: 16px 16px 4px 4px; }
+  .shelf { background: #7a5b3f; padding: 8px; }
+  .shelf i { display: block; height: 70px; margin-bottom: 16px; border-bottom: 6px solid #5d4430;
+    background: repeating-linear-gradient(90deg, #c9573f 0 14px, #e2b13c 14px 30px, #3f7f8a 30px 42px, #f1e9dc 42px 52px, #50405e 52px 66px); }
+  .tv { background: linear-gradient(135deg, #1b1f27, #3a4350); border: 8px solid #0d0f13; border-radius: 6px; }
+  .console { background: #8a6a4b; border-radius: 6px 6px 0 0; }
+  .cab { background-color: #f3efe6; background-image: repeating-linear-gradient(90deg, transparent 0 138px, rgba(0,0,0,.16) 138px 140px); }
+  .counter { background: #444b4f; }
+  .fridge { background: #dfe5e8; border-radius: 10px 10px 0 0; }
+  .fridge::before { content: ""; position: absolute; left: 0; right: 0; top: 38%; height: 3px; background: rgba(0,0,0,.2); }
+  .fridge::after { content: ""; position: absolute; right: 14px; top: 12%; width: 6px; height: 60px; background: #8c969b; border-radius: 3px; }
+  .ward { background: #b99b76; border: 6px solid #9a7c58; }
+  .ward::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: rgba(0,0,0,.25); }
+  .mirror { background: linear-gradient(135deg, #e8f2f6, #b6cfd9); border: 8px solid #fbf6ec; border-radius: 120px; }
+  .tub { background: #fdfdfb; border-radius: 10px 10px 90px 90px; box-shadow: inset 0 -14px 0 rgba(0,0,0,.06); }
+  .sink { background: #fdfdfb; border-radius: 0 0 40px 40px; }
+  .desk { background: #8a6a4b; }
+  .monitor { background: linear-gradient(135deg, #1d2430, #3d4a5c); border: 6px solid #0d0f13; border-radius: 4px; }
+  .cork { background: #c49a62; border: 8px solid #7a5b3f; }
+  .curtain { background: repeating-linear-gradient(90deg, #8e6fb0 0 18px, #7a5c9b 18px 30px); }
+  .lamp::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 70px; background: #f4d9a0; clip-path: polygon(20% 0, 80% 0, 100% 100%, 0 100%); }
+  .lamp::after { content: ""; position: absolute; left: 50%; width: 6px; margin-left: -3px; top: 70px; bottom: 0; background: #333; }
+  .light { border-radius: 50%; background: radial-gradient(circle, rgba(255,240,200,.95), rgba(255,240,200,0) 70%); }
+
+  /* floor furniture, drawn top-down */
+  .rug { border-radius: 14px; }
+  .tbl { background: #8a6a4b; box-shadow: 0 0 0 6px rgba(0,0,0,.12); }
+  .chair { width: 70px; height: 70px; border-radius: 50%; background: #476a6b; }
+  .bed { background: #f6f1e7; border: 10px solid #9a7c58; border-radius: 10px; }
+  .pillow { background: #fff; border-radius: 12px; box-shadow: 0 0 0 2px rgba(0,0,0,.1); }
+  .blanket { background: #8e6fb0; }
+
+  /* ---------- HUD ---------- */
+  .hud { position: absolute; z-index: 10; left: 24px; bottom: 24px; color: #fff; pointer-events: none;
+    padding: 14px 18px; background: rgba(20,17,15,.62); backdrop-filter: blur(6px); border-radius: 14px; opacity: 0; transition: opacity .4s; }
+  .hud.on { opacity: 1; }
+  .hud b { display: block; font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+  .hud span { font-size: 14px; opacity: .75; }
+  .bar { position: absolute; z-index: 10; right: 20px; top: 20%; bottom: 20%; width: 4px; background: rgba(255,255,255,.25); border-radius: 2px; }
+  .bar i { position: absolute; left: 0; right: 0; top: 0; height: 0; background: #ffd27a; border-radius: 2px; }
+  .hint { position: absolute; z-index: 10; left: 50%; bottom: 7vh; transform: translateX(-50%); color: #fff; text-align: center;
+    font-size: 18px; font-weight: 500; text-shadow: 0 1px 8px rgba(0,0,0,.4); pointer-events: none; }
+  .hint::after { content: ""; display: block; width: 12px; height: 12px; margin: 10px auto 0;
+    border-right: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(45deg); animation: nudge 1.4s ease-in-out infinite; }
+  @keyframes nudge { 50% { transform: translateY(6px) rotate(45deg); } }
+  .title { position: absolute; z-index: 10; left: 0; right: 0; top: 7vh; text-align: center; color: #fff; pointer-events: none;
+    font-size: clamp(28px, 5vw, 56px); font-weight: 700; letter-spacing: -.03em; text-shadow: 0 2px 16px rgba(0,0,0,.35); }
+  @media (prefers-reduced-motion: reduce) { .hint::after { animation: none; } }
+</style>
+</head>
+<body>
+<div class="scroller"></div>
+
+<div class="stage">
+  <div class="interior-wrap" id="iwrap"><div class="interior"><div class="world" id="world"></div></div></div>
+
+  <div class="exterior" id="exterior">
+    <div class="sun"></div>
+    <div class="house" id="house">
+      <div class="ground"></div>
+      <div class="path"></div>
+      <div class="trunk" style="left:52px"></div><div class="canopy" style="left:0px"></div>
+      <div class="trunk" style="left:732px"></div><div class="canopy" style="left:680px"></div>
+      <div class="hbody"></div>
+      <div class="hroof"></div>
+      <div class="hsign">HOTEL</div>
+      <div class="hwindows"></div>
+      <div class="lobbywin" style="left:140px"></div>
+      <div class="lobbywin" style="left:480px"></div>
+      <div class="canopy2"></div>
+      <div class="frame"></div>
+      <div class="doorway"><div class="door" id="door"></div></div>
+    </div>
+  </div>
+
+  <div class="title" id="title">Welcome to the Harbor Hotel</div>
+  <div class="hint" id="hint">Scroll to step inside</div>
+  <div class="hud" id="hud"><b id="roomName"></b><span id="roomCount"></span></div>
+  <div class="bar"><i id="barFill"></i></div>
+</div>
+
+<script>
+const W = 1000, H = 600, D = 1100;
+
+/* helpers: h = hung on wall at top y, g = standing on the floor */
+const h = (cls, x, y, w, ht, inner = '', st = '') =>
+  `<div class="${cls}" style="left:${x}px;top:${y}px;width:${w}px;height:${ht}px;${st}">${inner}</div>`;
+const g = (cls, x, w, ht, inner = '', st = '') =>
+  `<div class="${cls}" style="left:${x}px;bottom:0;width:${w}px;height:${ht}px;${st}">${inner}</div>`;
+const shelf = (x, w, rows) => g('shelf', x, w, rows * 86 + 14, '<i></i>'.repeat(rows));
+
+const rt = (x, y) => h('tbl', x, y, 150, 150, '', 'border-radius:50%;background:#efe3cf') +
+  [[40, -80], [40, 160], [-80, 40], [160, 40]].map(([dx, dy]) => h('chair', x + dx, y + dy, 70, 70, '', 'background:#c9a24a')).join('');
+const red = '--c:#8a3b3b;--c2:#a24d4d';
+const tealSofa = '--c:#1f3a40;--c2:#2f5560';
+const books = n => '<i></i>'.repeat(n);
+
+const rooms = [
+  { name: 'Lobby', wall: '#efe3cf', ceil: '#faf4e6',
+    floor: 'repeating-conic-gradient(#f3eee4 0 25%,#c9bfa9 0 50%) 0 0/140px 140px',
+    left: [h('sign', 140, 150, 400, 60, 'Reception'),
+           h('art', 600, 120, 300, 180, '', 'background:linear-gradient(135deg,#1f3a40,#c9a24a)'),
+           g('desk', 140, 520, 190, '<div style="position:absolute;left:0;right:0;top:0;height:22px;background:#3b2f2a"></div>', 'background:#1f3a40'),
+           g('plant', 840, 120, 300)],
+    right: [g('sofa', 140, 360, 160, '', red), g('sofa', 620, 360, 160, '', red),
+            h('art', 240, 130, 200, 250, '', 'background:linear-gradient(160deg,#e2b13c,#3f7f8a)'),
+            h('art', 680, 130, 200, 250, '', 'background:linear-gradient(160deg,#c9573f,#1f3a40)'),
+            g('plant', 480, 110, 300)],
+    fl: [h('rug', 250, 300, 500, 600, '', 'background:#1f3a40;box-shadow:inset 0 0 0 14px #c9a24a'),
+         h('tbl', 420, 520, 160, 160, '', 'border-radius:50%;background:#d8c9a8')],
+    cl: [h('light', 350, 450, 300, 300)] },
+
+  { name: 'Restaurant', wall: '#bcd1c4', ceil: '#eef4ef',
+    floor: 'repeating-linear-gradient(90deg,#6d5238 0 90px,#62492f 90px 93px)',
+    left: [h('sign', 100, 80, 420, 60, 'Restaurant'), h('win', 100, 170, 360, 230),
+           h('shelf', 560, 100, 420, 272, books(3)), g('cab', 540, 460, 200, '', 'background-color:#3b2f2a'),
+           h('counter', 530, 374, 480, 26)],
+    right: [g('sofa', 140, 720, 150, '', red),
+            h('art', 200, 120, 200, 170, '', 'background:linear-gradient(135deg,#e2b13c,#c9573f)'),
+            h('art', 480, 120, 200, 170, '', 'background:linear-gradient(135deg,#3f7f8a,#f1e9dc)'),
+            h('win', 760, 110, 220, 250)],
+    fl: [rt(180, 250), rt(670, 250), rt(180, 700), rt(670, 700)],
+    cl: [h('light', 350, 450, 300, 300)] },
+
+  { name: 'Guest room', wall: '#e6dccb', ceil: '#f8f3e8',
+    floor: 'repeating-linear-gradient(90deg,#a0a8ad 0 100px,#979fa4 100px 102px)',
+    left: [h('win', 280, 100, 420, 320),
+           h('curtain', 220, 80, 70, 360, '', 'background:repeating-linear-gradient(90deg,#c9a24a 0 18px,#b58f38 18px 30px)'),
+           h('curtain', 710, 80, 70, 360, '', 'background:repeating-linear-gradient(90deg,#c9a24a 0 18px,#b58f38 18px 30px)')],
+    right: [g('ward', 380, 420, 430), h('tv', 100, 200, 220, 130), g('lamp', 880, 70, 300)],
+    fl: [h('bed', 40, 400, 430, 570, '<div class="pillow" style="left:30px;top:20px;width:170px;height:90px"></div><div class="pillow" style="left:220px;top:20px;width:170px;height:90px"></div><div class="blanket" style="left:0;right:0;top:230px;bottom:0;background:#1f3a40"></div>'),
+         h('rug', 560, 360, 340, 420, '', 'background:#c9b88f;box-shadow:inset 0 0 0 10px #e6dcc0')],
+    cl: [h('light', 350, 450, 300, 300)] },
+
+  { name: 'Pool and spa', wall: '#cfe6e8', ceil: '#f1f8f8',
+    floor: 'repeating-linear-gradient(0deg,rgba(0,0,0,.1) 0 3px,transparent 3px 100px),repeating-linear-gradient(90deg,rgba(0,0,0,.1) 0 3px,transparent 3px 100px),#e8e1d2',
+    left: [h('win', 100, 90, 900, 330), g('lounger', 200, 260, 70), g('lounger', 620, 260, 70), g('plant', 60, 110, 260)],
+    right: [h('sign', 140, 70, 420, 60, 'Pool and spa'), g('shelf', 620, 300, 186, books(2)),
+            g('plant', 120, 120, 320), g('plant', 520, 110, 280)],
+    fl: [h('pool', 150, 180, 700, 760, '', 'background:radial-gradient(circle at 30% 30%,#7fe0ee,#1c8aa8 70%);box-shadow:0 0 0 18px #f6f1e7,0 0 0 24px #1f3a40;border-radius:20px')],
+    cl: [h('light', 350, 450, 300, 300)] },
+
+  { name: 'Rooftop lounge', wall: '#ecd9b0', ceil: '#f7ecd2',
+    floor: 'repeating-linear-gradient(90deg,#8a6a4b 0 80px,#7d5f43 80px 83px)',
+    left: [h('win', 100, 80, 900, 360, '', 'background:linear-gradient(#5b6fa8,#f2a15f 70%,#fbd89a)'),
+           g('sofa', 200, 360, 150, '', tealSofa), g('lamp', 700, 80, 300)],
+    right: [h('shelf', 140, 100, 300, 272, books(3)), g('cab', 500, 460, 200, '', 'background-color:#1f3a40'),
+            h('counter', 490, 374, 480, 26)],
+    fl: [h('rug', 220, 360, 560, 440, '', 'background:#1f3a40;box-shadow:inset 0 0 0 12px #c9a24a'),
+         h('tbl', 420, 520, 160, 160, '', 'border-radius:50%;background:#efe3cf')],
+    cl: [h('light', 350, 450, 300, 300)], last: true }
+];
+
+/* build rooms */
+const world = document.getElementById('world');
+world.innerHTML = rooms.map((r, i) => `
+  <div class="room" style="--wall:${r.wall};transform:translateZ(${-i * D}px)">
+    <div class="face floor" style="background:${r.floor}">${r.fl.join('')}<div class="shade"></div></div>
+    <div class="face ceil" style="background:${r.ceil}">${r.cl.join('')}<div class="shade"></div></div>
+    <div class="face wall lw">${r.left.join('')}</div>
+    <div class="face wall rw">${r.right.join('')}</div>
+    ${r.last
+      ? `<div class="face bw full">See you at check-in.</div>`
+      : `<div class="face bw l"></div><div class="face bw r"></div><div class="face bw t">${rooms[i + 1].name}</div>`}
+  </div>`).join('');
+
+/* elements */
+const $ = id => document.getElementById(id);
+const iwrap = $('iwrap'), exterior = $('exterior'), house = $('house'), door = $('door');
+const hint = $('hint'), title = $('title'), hud = $('hud'), roomName = $('roomName'), roomCount = $('roomCount'), barFill = $('barFill');
+const N = rooms.length;
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const smooth = t => { t = clamp(t); return t * t * (3 - 2 * t); };
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let target = 0, current = 0, lastIdx = -2;
+
+function scrollProgress() {
+  const max = document.documentElement.scrollHeight - innerHeight;
+  return max > 0 ? clamp(scrollY / max) : 0;
+}
+addEventListener('scroll', () => { target = scrollProgress(); });
+addEventListener('resize', () => { target = scrollProgress(); render(current); });
+
+function render(p) {
+  const vw = innerWidth, vh = innerHeight;
+
+  /* 1. Zoom toward the front door */
+  const fit = Math.min(vw / 800, vh / 600);
+  const sEnd = Math.max(vw * 1.25 / 90, vh * 1.25 / 150);
+  const z = clamp(p / 0.24);
+  const e = z < .5 ? 4 * z * z * z : 1 - Math.pow(-2 * z + 2, 3) / 2;
+  const S = fit * Math.pow(sEnd / fit, e);
+  house.style.transform = `translate(-50%,-50%) translate(0,${-170 * e}px) scale(${S})`;
+
+  /* 2. Door swings open */
+  door.style.transform = `rotateY(${-112 * smooth((p - 0.17) / 0.1)}deg)`;
+
+  /* 3. Outside fades, inside takes over */
+  const fade = smooth((p - 0.27) / 0.06);
+  exterior.style.opacity = 1 - fade;
+  exterior.style.display = fade >= 1 ? 'none' : 'block';
+  iwrap.style.visibility = p > 0.18 ? 'visible' : 'hidden';
+
+  /* 4. Walk through the rooms, slowing down in the middle of each one */
+  const t = clamp((p - 0.28) / 0.72);
+  const u = t * N, i = Math.min(Math.floor(u), N - 1), f = u - i;
+  const fs = f + 0.7 * Math.sin(2 * Math.PI * f) / (2 * Math.PI);
+  const pos = (t >= 1 ? N : i + fs) / N;
+  const c0 = 500, c1 = N * D + 300;
+  const c = c0 + pos * (c1 - c0);
+  const s = clamp(vw / 1000 * 1.1, 0.5, 1.2);
+  iwrap.style.transform = `scale(${s})`;
+  world.style.transform = `translateZ(${c}px)`;
+
+  /* 5. Text and progress */
+  hint.style.opacity = 1 - clamp(p / 0.03);
+  title.style.opacity = 1 - clamp(p / 0.05);
+  barFill.style.height = (p * 100) + '%';
+  const idx = c < 900 ? -1 : Math.min(N - 1, Math.floor((c - 900) / D + 0.0001));
+  if (idx !== lastIdx) {
+    lastIdx = idx;
+    if (idx < 0) hud.classList.remove('on');
+    else {
+      roomName.textContent = rooms[idx].name;
+      roomCount.textContent = `Room ${idx + 1} of ${N}`;
+      hud.classList.add('on');
+    }
+  }
+}
+
+function loop() {
+  const d = target - current;
+  current = reduce || Math.abs(d) < 0.00005 ? target : current + d * 0.08;
+  render(current);
+  requestAnimationFrame(loop);
+}
+target = scrollProgress(); current = target;
+loop();
+</script>
+</body>
+</html>
