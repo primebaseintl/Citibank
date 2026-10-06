@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>3D City & Walkable Duplex Buildings</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; background: #11141a; font-family: "Bricolage Grotesque", sans-serif; color: #fff; user-select: none; touch-action: none; }
+  #canvas-container { position: fixed; inset: 0; }
+  
+  /* HUD Overlay */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-space-between; padding: 16px; }
+  .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
+  .pill { background: rgba(18, 22, 31, 0.75); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 10px 16px; font-size: 16px; font-weight: 700; pointer-events: auto; }
+  .pill small { font-size: 12px; opacity: 0.7; font-weight: 500; display: block; }
+  
+  .controls-hint { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; background: rgba(18, 22, 31, 0.85); padding: 10px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
+  
+  /* On-screen touch controls for mobile */
+  #touch-controls { position: fixed; bottom: 20px; left: 20px; right: 20px; display: flex; justify-space-between; z-index: 20; pointer-events: none; }
+  .dpad, .action-pad { display: flex; gap: 10px; pointer-events: auto; }
+  .btn { width: 60px; height: 60px; border-radius: 50%; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(4px); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; }
+  .btn:active { background: rgba(201, 162, 74, 0.8); color: #111; }
+  @media (min-width: 768px) { #touch-controls { display: none; } }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<div id="hud">
+  <div class="top-bar">
+    <div class="pill">
+      City Simulator
+      <small id="location-tag">Location: Outside</small>
+    </div>
+    <div class="pill" style="text-align: right;">
+      Controls
+      <small>WASD / Arrows to Walk</small>
+    </div>
+  </div>
+  
+  <div class="controls-hint">
+    Use <b>WASD</b> or <b>Arrow Keys</b> to walk. Walk up the stairs to explore the upstairs duplex rooms!
+  </div>
+</div>
+
+<div id="touch-controls">
+  <div class="dpad">
+    <div class="btn" id="btn-up">▲</div>
+    <div class="btn" id="btn-down">▼</div>
+  </div>
+  <div class="action-pad">
+    <div class="btn" id="btn-left">◄</div>
+    <div class="btn" id="btn-right">►</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// --- Initialize Three.js Scene ---
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a2130);
+scene.fog = new THREE.FogExp2(0x1a2130, 0.015);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+
+// --- Lighting ---
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xffebd7, 0.8);
+sunLight.position.set(50, 80, 40);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 2048;
+sunLight.shadow.mapSize.height = 2048;
+sunLight.shadow.camera.near = 0.5;
+sunLight.shadow.camera.far = 200;
+const d = 60;
+sunLight.shadow.camera.left = -d;
+sunLight.shadow.camera.right = d;
+sunLight.shadow.camera.top = d;
+sunLight.shadow.camera.bottom = -d;
+scene.add(sunLight);
+
+// Point lights inside rooms for atmosphere
+function addRoomLight(x, y, z, color = 0xffe0b0, intensity = 0.8) {
+  const light = new THREE.PointLight(color, intensity, 15);
+  light.position.set(x, y, z);
+  scene.add(light);
+}
+
+// --- Materials ---
+const matRoad = new THREE.MeshStandardMaterial({ color: 0x22252a, roughness: 0.8 });
+const matMarking = new THREE.MeshStandardMaterial({ color: 0xf0cf7a, roughness: 0.5 });
+const matGrass = new THREE.MeshStandardMaterial({ color: 0x344e35, roughness: 0.9 });
+const matSidewalk = new THREE.MeshStandardMaterial({ color: 0x8c8c8c, roughness: 0.7 });
+const matWallOuter = new THREE.MeshStandardMaterial({ color: 0xdfd8c8, roughness: 0.6 });
+const matWallInner = new THREE.MeshStandardMaterial({ color: 0xf0ece1, roughness: 0.5 });
+const matWood = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.4 });
+const matGlass = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, roughness: 0.1, transmission: 0.9 });
+const matRoof = new THREE.MeshStandardMaterial({ color: 0x3a3d40, roughness: 0.5 });
+const matFurniture = new THREE.MeshStandardMaterial({ color: 0x2b4251, roughness: 0.5 });
+const matBed = new THREE.MeshStandardMaterial({ color: 0x8b3a3a, roughness: 0.6 });
+
+// --- World Geometry Collision Storage ---
+const colliders = [];
+const stairs = []; // Stair trigger zones for climbing
+
+// --- Ground & Drawn Road Layout ---
+// Main Terrain Grass
+const terrain = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), matGrass);
+terrain.rotation.x = -Math.PI / 2;
+terrain.receiveShadow = true;
+scene.add(terrain);
+
+// Custom Road Mesh following the user's layout drawing
+function createRoads() {
+  const roadGroup = new THREE.Group();
+  
+  // Main Longitudinal Road (Center-Left)
+  const road1 = new THREE.Mesh(new THREE.PlaneGeometry(12, 200), matRoad);
+  road1.rotation.x = -Math.PI / 2;
+  road1.position.set(-15, 0.01, 0);
+  road1.receiveShadow = true;
+  roadGroup.add(road1);
+
+  // Connecting Transverse Road
+  const road2 = new THREE.Mesh(new THREE.PlaneGeometry(120, 12), matRoad);
+  road2.rotation.x = -Math.PI / 2;
+  road2.position.set(30, 0.01, 10);
+  road2.receiveShadow = true;
+  roadGroup.add(road2);
+
+  // Secondary Branch Road
+  const road3 = new THREE.Mesh(new THREE.PlaneGeometry(12, 100), matRoad);
+  road3.rotation.x = -Math.PI / 2;
+  road3.position.set(45, 0.01, -36);
+  road3.receiveShadow = true;
+  roadGroup.add(road3);
+
+  // Yellow Road Markings
+  const mark1 = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 200), matMarking);
+  mark1.rotation.x = -Math.PI / 2;
+  mark1.position.set(-15, 0.02, 0);
+  roadGroup.add(mark1);
+
+  const mark2 = new THREE.Mesh(new THREE.PlaneGeometry(120, 0.6), matMarking);
+  mark2.rotation.x = -Math.PI / 2;
+  mark2.position.set(30, 0.02, 10);
+  roadGroup.add(mark2);
+
+  scene.add(roadGroup);
+}
+createRoads();
+
+// --- Builder Helper Functions ---
+function createWall(w, h, d, x, y, z, mat = matWallOuter) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  
+  // Register collider
+  colliders.push(new THREE.Box3().setFromObject(mesh));
+  return mesh;
+}
+
+// Build a Duplex Building (2 Floors, Real Climbable Stairs, Interior Rooms)
+function createDuplexBuilding(x, z, angle = 0) {
+  const group = new THREE.Group();
+  group.position.set(x, 0, z);
+  group.rotation.y = angle;
+
+  const w = 16, d = 14, h1 = 3.5, h2 = 3.2, wallT = 0.3;
+
+  // --- Ground Floor (Floor 1) ---
+  // Foundation / Floor slab
+  const floor1 = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, d), matSidewalk);
+  floor1.position.set(0, 0.1, 0);
+  floor1.receiveShadow = true;
+  group.add(floor1);
+
+  // Outer Walls Ground Floor with Entrance Door Opening
+  createWall(wallT, h1, d, x - w/2 + wallT/2, h1/2, z); // Left
+  createWall(wallT, h1, d, x + w/2 - wallT/2, h1/2, z); // Right
+  createWall(w, h1, wallT, x, h1/2, z - d/2 + wallT/2); // Back wall
+
+  // Front wall split for Doorway
+  createWall(5, h1, wallT, x - 4.5, h1/2, z + d/2 - wallT/2);
+  createWall(65, h1, wallT, x + 4.5, h1/2, z + d/2 - wallT/2);
+
+  // Interior Wall (Dividing Living Room & Kitchen)
+  createWall(wallT, h1, 8, x - 1, h1/2, z + 2);
+
+  // Ground Floor Furniture (Living Room & Kitchen)
+  const sofa = new THREE.Mesh(new THREE.BoxGeometry(3, 0.8, 1.2), matFurniture);
+  sofa.position.set(x - 5, 0.5, z - 4);
+  scene.add(sofa);
+
+  const table = new THREE.Mesh(new THREE.BoxGeometry(2, 0.7, 2), matWood);
+  table.position.set(x + 4, 0.45, z - 3);
+  scene.add(table);
+
+  // --- Staircase (Climbable Duplex Feature) ---
+  const stairSteps = 12;
+  const stairWidth = 2.2;
+  const stepDepth = (d - 4) / stairSteps;
+  const stepHeight = h1 / stairSteps;
+  const stairStartX = x + 5.5;
+  const stairStartZ = z + d/2 - 2;
+
+  for (let i = 0; i < stairSteps; i++) {
+    const stepY = i * stepHeight + stepHeight / 2;
+    const stepZ = stairStartZ - (i * stepDepth);
+    
+    const step = new THREE.Mesh(new THREE.BoxGeometry(stairWidth, stepHeight, stepDepth), matWood);
+    step.position.set(stairStartX, stepY, stepZ);
+    step.castShadow = true;
+    step.receiveShadow = true;
+    scene.add(step);
+    
+    // Register individual step colliders
+    colliders.push(new THREE.Box3().setFromObject(step));
+  }
+
+  // Stairway slope trigger zone
+  stairs.push({
+    xMin: stairStartX - stairWidth/2,
+    xMax: stairStartX + stairWidth/2,
+    zStart: stairStartZ,
+    zEnd: stairStartZ - (stairSteps * stepDepth),
+    bottomY: 0,
+    topY: h1
+  });
+
+  // --- Upper Floor (Floor 2 - Duplex) ---
+  const floor2Y = h1;
+  
+  // Floor slab with opening for stairs
+  const floor2Left = new THREE.Mesh(new THREE.BoxGeometry(w - 3.5, 0.2, d), matWood);
+  floor2Left.position.set(x - 1.75, floor2Y, z);
+  floor2Left.receiveShadow = true;
+  scene.add(floor2Left);
+  colliders.push(new THREE.Box3().setFromObject(floor2Left));
+
+  const floor2BackRight = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.2, d - 6), matWood);
+  floor2BackRight.position.set(x + 6.25, floor2Y, z - 3);
+  floor2BackRight.receiveShadow = true;
+  scene.add(floor2BackRight);
+  colliders.push(new THREE.Box3().setFromObject(floor2BackRight));
+
+  // Upper Floor Exterior Walls
+  createWall(wallT, h2, d, x - w/2 + wallT/2, floor2Y + h2/2, z); // Left
+  createWall(wallT, h2, d, x + w/2 - wallT/2, floor2Y + h2/2, z); // Right
+  createWall(w, h2, wallT, x, floor2Y + h2/2, z - d/2 + wallT/2); // Back
+  createWall(w, h2, wallT, x, floor2Y + h2/2, z + d/2 - wallT/2); // Front
+
+  // Upper Floor Bedrooms Partition Walls
+  createWall(w - 4, h2, wallT, x - 2, floor2Y + h2/2, z); // Bedroom divider horizontal
+  createWall(wallT, h2, d/2, x - 2, floor2Y + h2/2, z - d/4); // Bedroom divider vertical
+
+  // Bedrooms Furniture Upstairs
+  const bed1 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.6, 2.8), matBed);
+  bed1.position.set(x - 5.5, floor2Y + 0.4, z - 4.5);
+  scene.add(bed1);
+
+  const bed2 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.6, 2.8), matBed);
+  bed2.position.set(x + 1.5, floor2Y + 0.4, z - 4.5);
+  scene.add(bed2);
+
+  // Roof Slab
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.3, d + 0.6), matRoof);
+  roof.position.set(x, floor2Y + h2 + 0.15, z);
+  roof.castShadow = true;
+  scene.add(roof);
+
+  // Add warm lights inside ground & upper rooms
+  addRoomLight(x - 3, 2, z - 2, 0xffd89e, 1.0);
+  addRoomLight(x - 4, floor2Y + 2, z - 4, 0xffd89e, 0.8);
+  addRoomLight(x + 2, floor2Y + 2, z - 4, 0xffd89e, 0.8);
+}
+
+// Generate City Buildings based on Layout
+createDuplexBuilding(10, -20);
+createDuplexBuilding(-38, -15);
+createDuplexBuilding(20, 35);
+
+// Decorative Street Trees
+function createTree(x, z) {
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2.5), matWood);
+  trunk.position.set(x, 1.25, z);
+  trunk.castShadow = true;
+  scene.add(trunk);
+
+  const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(1.5), matGrass);
+  leaves.position.set(x, 3, z);
+  leaves.castShadow = true;
+  scene.add(leaves);
+}
+createTree(-6, 8);
+createTree(-6, -12);
+createTree(32, -4);
+createTree(32, 24);
+
+// --- Player / Camera Controller ---
+const player = {
+  pos: new THREE.Vector3(-15, 0, 40),
+  velocity: new THREE.Vector3(),
+  height: 1.6,
+  radius: 0.5,
+  speed: 9.0,
+  rotationY: 0
+};
+
+camera.position.set(player.pos.x, player.pos.y + player.height, player.pos.z);
+
+// Keyboard Input Handler
+const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+
+window.addEventListener('keydown', (e) => { if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; });
+window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; });
+
+// Touch Controls Handling
+const bindTouch = (id, keyName) => {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
+  el.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
+};
+bindTouch('btn-up', 'w');
+bindTouch('btn-down', 's');
+bindTouch('btn-left', 'a');
+bindTouch('btn-right', 'd');
+
+// --- Physics & Stair Climbing Update Loop ---
+const clock = new THREE.Clock();
+
+function updatePlayer(delta) {
+  const moveForward = (keys.w || keys.arrowup) ? 1 : ((keys.s || keys.arrowdown) ? -1 : 0);
+  const turn = (keys.a || keys.arrowleft) ? 1 : ((keys.d || keys.arrowright) ? -1 : 0);
+
+  // Rotate player heading
+  player.rotationY += turn * 2.2 * delta;
+  camera.rotation.y = player.rotationY;
+
+  // Move Direction vectors
+  const dir = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotationY);
+  
+  const moveDist = moveForward * player.speed * delta;
+  const nextPos = player.pos.clone().addScaledVector(dir, moveDist);
+
+  // Check Stair Climbing
+  let onStairs = false;
+  for (let s of stairs) {
+    if (nextPos.x >= s.xMin && nextPos.x <= s.xMax) {
+      if (nextPos.z <= s.zStart && nextPos.z >= s.zEnd) {
+        // Calculate height interpolant along stairs
+        const progress = (s.zStart - nextPos.z) / (s.zStart - s.zEnd);
+        nextPos.y = THREE.MathUtils.lerp(s.bottomY, s.topY, progress);
+        onStairs = true;
+        break;
+      }
+    }
+  }
+
+  // Standard Ground Snap if not on stairs
+  if (!onStairs) {
+    if (nextPos.y > 3.0) {
+      nextPos.y = 3.5; // Upper Floor level snap
+    } else {
+      nextPos.y = 0; // Ground level snap
+    }
+  }
+
+  // Simple Wall Collision Check
+  const playerBox = new THREE.Box3();
+  playerBox.setFromCenterAndSize(
+    new THREE.Vector3(nextPos.x, nextPos.y + player.height/2, nextPos.z),
+    new THREE.Vector3(player.radius * 2, player.height, player.radius * 2)
+  );
+
+  let collided = false;
+  for (let box of colliders) {
+    if (box.intersectsBox(playerBox)) {
+      collided = true;
+      break;
+    }
+  }
+
+  if (!collided) {
+    player.pos.copy(nextPos);
+  }
+
+  // Update Camera Position
+  camera.position.set(player.pos.x, player.pos.y + player.height, player.pos.z);
+
+  // Update UI Location Tag
+  const locTag = document.getElementById('location-tag');
+  if (player.pos.y > 2.0) {
+    locTag.textContent = "Location: Duplex Upper Floor Rooms";
+  } else if (player.pos.x > -5 && player.pos.x < 25 && player.pos.z < 0) {
+    locTag.textContent = "Location: Inside Duplex Ground Floor";
+  } else {
+    locTag.textContent = "Location: Outside City Road";
+  }
+}
+
+// --- Window Resize Handler ---
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --- Main Render Loop ---
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = Math.min(clock.getDelta(), 0.1);
+  updatePlayer(delta);
+  renderer.render(scene, camera);
+}
+
+animate();
+</script>
+</body>
+</html>
