@@ -63,6 +63,10 @@
   @media (hover: none) { #keyhelp { display: none; } }
   @media (max-width: 600px) { #pips { display: none; } #clock { font-size: 34px; } }
 
+  .field { display: block; width: 100%; min-height: 50px; margin: 0 0 10px; padding: 0 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,.35);
+    background: rgba(20,17,15,.35); color: #fff; font: inherit; font-size: 18px; user-select: text; -webkit-user-select: text; }
+  .field:focus-visible { outline: 3px solid #f0cf7a; outline-offset: 2px; }
+  #room { display: none; left: 14px; top: calc(62px + env(safe-area-inset-top)); font-size: 14px; padding: 6px 12px; }
   /* walk mode and free-drive tweaks */
   body[data-mode="foot"] #topL, body[data-mode="foot"] #topR, body[data-mode="foot"] #clock, body[data-mode="foot"] #arrow, body[data-mode="foot"] #restartB,
   body[data-free="1"] #topL, body[data-free="1"] #clock, body[data-free="1"] #arrow, body[data-free="1"] #restartB { display: none; }
@@ -125,6 +129,7 @@
     <svg id="arrow" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2 L20 21 L12 16 L4 21 Z" fill="#f0cf7a"/></svg>
     <span id="goalTxt">Get ready</span>
   </div>
+  <div class="pill" id="room"></div>
   <div id="toast"></div>
   <div id="count"></div>
   <div id="keyhelp">W A S D or arrow keys to drive, Space to drift, R to restart</div>
@@ -147,6 +152,7 @@
 <div id="card"><div class="panel" id="panel"></div></div>
 <div id="err">The 3D library could not load. Check your internet connection and reload the page.</div>
 
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function () {
@@ -1196,6 +1202,7 @@ function updateDoors(dt) {
   npcs.forEach(n => { if (n.route) chk(n.x, n.z); });
   if (G.mode === 'foot') chk(me.x, me.z);
   if (G.mode === 'tour') chk(camera.position.x, camera.position.z);
+  Object.values(remotes).forEach(r => { if (r.mode === 0) chk(r.ax, r.az); });
   doorT += ((near ? 1 : 0) - doorT) * (1 - Math.exp(-dt * 3));
   doorPanels.forEach(d => { d.g.position.x = d.sd * (1.2 + 2.4 * doorT); });
 }
@@ -1224,6 +1231,10 @@ function pushOut(o, r) {
     obst.forEach(c => circ(c.x, c.z, c.r));
     traffic.forEach(t => { circ(t.x + t.dir * 1.25, t.z, 1.0); circ(t.x - t.dir * 1.25, t.z, 1.0); });
     circ(player.x + pc * 1.25, player.z + ps * 1.25, 1.0); circ(player.x - pc * 1.25, player.z - ps * 1.25, 1.0);
+    Object.values(remotes).forEach(r => {
+      if (r.mode === 0) circ(r.ax, r.az, 0.35);
+      circ(r.acx + Math.cos(r.ach) * 1.25, r.acz - Math.sin(r.ach) * 1.25, 1.0); circ(r.acx - Math.cos(r.ach) * 1.25, r.acz + Math.sin(r.ach) * 1.25, 1.0);
+    });
   }
   o.x = clamp(o.x, -X_LIM, X_LIM); o.z = Math.min(o.z, Z_LIM);
 }
@@ -1333,7 +1344,8 @@ const hideCard = () => card.classList.remove('on');
 function showMenu() {
   setMode('menu'); G.phase = 'idle';
   showCard('<h1>Harbor Valet</h1><p>Eight room keys are scattered around the block. Collect them all, then park nose-in at the glowing valet bay before the clock runs out.</p><p class="sub">Each key adds 4 seconds. Each bump costs 2. Or skip the race: get out, walk into the hotel, meet the guests, and hop back in your car.</p>',
-    [{ label: 'Start driving', primary: true, fn: startRun }, { label: 'Walk around', fn: startWalk }, { label: 'Tour the hotel', fn: () => { hideCard(); setMode('tour'); } }]);
+    [{ label: 'Start driving', primary: true, fn: startRun }, { label: 'Walk around', fn: startWalk }, { label: net.on ? 'Room ' + net.code + ' is open' : 'Play with friends', fn: net.on ? startWalk : showNetCard },
+     { label: 'Tour the hotel', fn: () => { hideCard(); setMode('tour'); } }].concat(net.on ? [{ label: 'Leave room', fn: () => { netStop('You left the room'); showMenu(); } }] : []));
 }
 $('home').addEventListener('click', showMenu);
 $('menuB').addEventListener('click', showMenu);
@@ -1453,6 +1465,7 @@ function resolve(ox, oz, orad, ovx, ovz) {
 function collideAll() {
   obst.forEach(o => resolve(o.x, o.z, o.r, 0, 0));
   traffic.forEach(t => [1.25, -1.25].forEach(off => resolve(t.x + t.dir * off, t.z, 1.0, t.dir * t.v, 0)));
+  Object.values(remotes).forEach(r => [1.25, -1.25].forEach(off => resolve(r.acx + Math.cos(r.ach) * off, r.acz - Math.sin(r.ach) * off, 1.0, 0, 0)));
   /* hotel front and world edges */
   const c = Math.cos(player.h), s = -Math.sin(player.h);
   [1.25, -1.25].forEach(off => {
@@ -1642,6 +1655,8 @@ function frame(now) {
   const dt = Math.min(0.05, (now - prev) / 1000); prev = now; tClock += dt;
   stepTraffic(dt);
   stepNPCs(dt);
+  updateRemotes(dt);
+  netTick(dt);
   updateDoors(dt);
   if (G.mode === 'drive') updateDrive(dt);
   else {
@@ -1658,6 +1673,141 @@ function frame(now) {
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
+/* =====================================================================
+   MULTIPLAYER: real people share one hotel (peer to peer, no server of our own).
+   The host opens a room code, friends join with it. Each player controls their own
+   person and car; the host relays everyone's position to everyone else.
+   ===================================================================== */
+const remotes = {};
+const net = { on: false, host: false, peer: null, conns: [], id: '', name: 'Guest', code: '', acc: 0, roomT: 0 };
+const hashStr = str => { let h = 7; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0; return h; };
+const num = v => Number.isFinite(+v) ? +v : 0;
+function mkLabel(text) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 64; const g = c.getContext('2d');
+  g.font = '700 32px "Bricolage Grotesque", system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const w = Math.min(248, g.measureText(text).width + 30);
+  g.fillStyle = 'rgba(20,17,15,.75)'; g.fillRect((256 - w) / 2, 8, w, 48);
+  g.fillStyle = '#f6e3ae'; g.fillText(text, 128, 33, 236);
+  const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding;
+  const s = new T.Sprite(new T.SpriteMaterial({ map: t, fog: false, transparent: true }));
+  s.scale.set(1.6, 0.4, 1); return s;
+}
+function getRemote(id, name) {
+  const hs = hashStr(id);
+  const h = makeHuman({ skin: SK[hs % 5], hair: HR[(hs >> 3) % 6], shirt: SHIRT[(hs >> 5) % 8], pants: PANTS[(hs >> 7) % 5], s: 1 });
+  const car = makeCar([0x20324f, 0xc9573f, 0xe2b13c, 0x3f7a54, 0x6b5ca5, 0xcfd2d6][hs % 6]); scene.add(car.g);
+  const l1 = mkLabel(name); l1.position.set(0, 2.15, 0); h.root.add(l1);
+  const l2 = mkLabel(name); l2.position.set(0, 2.6, 0); car.g.add(l2);
+  return (remotes[id] = { id, name, h, car, mode: 2, x: 0, z: 0, ph: 0, v: 0, cx: 0, cz: 0, ch: 0, cs: 0, ax: 0, az: 0, aph: 0, acx: 0, acz: 0, ach: 0, last: performance.now() });
+}
+function dropRemote(id) {
+  const r = remotes[id]; if (!r) return;
+  scene.remove(r.h.root); scene.remove(r.car.g); delete remotes[id]; toast(r.name + ' left');
+}
+function onState(d) {
+  if (!d || typeof d.id !== 'string' || d.id === net.id) return;
+  let r = remotes[d.id];
+  if (!r) {
+    r = getRemote(d.id, String(d.n || 'Guest').slice(0, 14));
+    Object.assign(r, { ax: num(d.x), az: num(d.z), aph: num(d.p), acx: num(d.cx), acz: num(d.cz), ach: num(d.ch) });
+    toast(r.name + ' joined');
+  }
+  Object.assign(r, { mode: num(d.m), x: num(d.x), z: num(d.z), ph: num(d.p), v: num(d.v), cx: num(d.cx), cz: num(d.cz), ch: num(d.ch), cs: num(d.cs), last: performance.now() });
+}
+function updateRemotes(dt) {
+  const now = performance.now(), k = 1 - Math.exp(-dt * 12);
+  Object.keys(remotes).forEach(id => {
+    const r = remotes[id];
+    if (now - r.last > 10000) { dropRemote(id); return; }
+    r.ax += (r.x - r.ax) * k; r.az += (r.z - r.az) * k; r.aph = wrapA(r.aph + wrapA(r.ph - r.aph) * k);
+    r.acx += (r.cx - r.acx) * k; r.acz += (r.cz - r.acz) * k; r.ach = wrapA(r.ach + wrapA(r.ch - r.ach) * k);
+    placeCar(r.car, r.acx, r.acz, r.ach, r.cs, dt, false);
+    const h = r.h; h.root.visible = r.mode === 0;
+    if (r.mode === 0) {
+      h.ph += r.v * dt * 4.5; h.amp = clamp(Math.abs(r.v) * 0.17, 0.1, 0.95);
+      setPose(h, Math.abs(r.v) > 0.2 ? 'walk' : 'idle', tClock);
+      h.root.position.set(r.ax, 0, r.az); h.root.rotation.y = r.aph;
+    }
+  });
+}
+const sendAll = d => net.conns.forEach(c => { if (c.open) { try { c.send(d); } catch (e) {} } });
+function onData(c, d) {
+  if (!d) return;
+  if (d.t === 's') { onState(d); if (net.host) net.conns.forEach(o => { if (o !== c && o.open) { try { o.send(d); } catch (e) {} } }); }
+  else if (d.t === 'bye' && typeof d.id === 'string') dropRemote(d.id);
+}
+function netTick(dt) {
+  if (!net.on) return;
+  net.acc += dt;
+  if (net.acc > 0.08) {
+    net.acc = 0;
+    const m = G.mode === 'foot' ? 0 : G.mode === 'drive' ? 1 : 2, f = v => Math.round(v * 100) / 100;
+    sendAll({ t: 's', id: net.id, n: net.name, m, x: f(me.x), z: f(me.z), p: f(me.ph), v: f(me.v), cx: f(player.x), cz: f(player.z), ch: f(player.h), cs: f(player.fv) });
+  }
+  net.roomT -= dt;
+  if (net.roomT <= 0) { net.roomT = 1; const n = 1 + Object.keys(remotes).length; $('room').textContent = 'Room ' + net.code + ', ' + n + (n === 1 ? ' player' : ' players'); }
+}
+function netStop(msg) {
+  try { net.peer && net.peer.destroy(); } catch (e) {}
+  net.on = false; net.host = false; net.conns = []; net.peer = null;
+  Object.keys(remotes).forEach(dropRemote);
+  $('room').style.display = 'none';
+  if (msg) toast(msg);
+}
+function netStart(host, code, name, done, fail) {
+  if (typeof Peer === 'undefined') { fail('The multiplayer library could not load. Check your connection and reload.'); return; }
+  net.name = name; let finished = false;
+  const bad = m => { if (finished) return; finished = true; try { net.peer && net.peer.destroy(); } catch (e) {} net.peer = null; fail(m); };
+  const live = () => { finished = true; net.on = true; net.code = code; net.roomT = 0; $('room').style.display = 'flex'; START.x = -6 - (hashStr(net.id) % 5) * 6; if (G.mode === 'menu') { player.x = START.x; } done(); };
+  if (host) {
+    const p = new Peer('harborvalet-' + code); net.peer = p;
+    p.on('open', id => { net.id = id; net.host = true; live(); });
+    p.on('connection', c => {
+      c.on('open', () => { net.conns.push(c); });
+      c.on('data', d => onData(c, d));
+      c.on('close', () => { net.conns = net.conns.filter(o => o !== c); dropRemote(c.peer); sendAll({ t: 'bye', id: c.peer }); });
+    });
+    p.on('error', e => bad(e.type === 'unavailable-id' ? 'That code is already in use. Try again.' : 'Could not open the room (' + e.type + ').'));
+  } else {
+    const p = new Peer(); net.peer = p;
+    p.on('open', id => {
+      net.id = id;
+      const c = p.connect('harborvalet-' + code, { serialization: 'json' });
+      const to = setTimeout(() => bad('No room found with that code.'), 10000);
+      c.on('open', () => { clearTimeout(to); net.conns = [c]; net.host = false; live(); });
+      c.on('data', d => onData(c, d));
+      c.on('close', () => { if (net.on) { netStop('The host closed the room'); if (G.mode === 'menu') showMenu(); } });
+    });
+    p.on('error', e => bad(e.type === 'peer-unavailable' ? 'No room found with that code.' : 'Connection problem (' + e.type + ').'));
+  }
+}
+function readName() {
+  const nm = ($('nm').value || '').trim().replace(/[^\w ]/g, '').slice(0, 14) || ('Guest' + Math.floor(10 + Math.random() * 89));
+  try { localStorage.setItem('harborValetName', nm); } catch (e) {}
+  return nm;
+}
+function showNetCard(msg) {
+  let saved = ''; try { saved = (localStorage.getItem('harborValetName') || '').replace(/[^\w ]/g, ''); } catch (e) {}
+  showCard('<h1>Play together</h1><p>One player hosts and shares the room code. Everyone else joins with it. Each player controls their own person and car.</p>' +
+    '<input class="field" id="nm" maxlength="14" placeholder="Your name" value="' + saved + '">' +
+    '<input class="field" id="cd" maxlength="5" placeholder="Room code to join" autocapitalize="characters" autocomplete="off">' +
+    '<p class="sub" id="netmsg">' + (typeof msg === 'string' ? msg : '') + '</p>',
+    [{ label: 'Host a room', primary: true, fn: doHost }, { label: 'Join a room', fn: doJoin }, { label: 'Back', fn: showMenu }]);
+}
+function doHost() {
+  const name = readName(), chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let code = '';
+  for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  $('netmsg').textContent = 'Opening the room...';
+  netStart(true, code, name, () => showCard('<h1>' + code + '</h1><p>Your room is open. Friends choose Play with friends, then Join a room, and type this code.</p><p class="sub">Keep this page open. The room closes when you leave.</p>',
+    [{ label: 'Start walking', primary: true, fn: startWalk }, { label: 'Menu', fn: showMenu }]), showNetCard);
+}
+function doJoin() {
+  const name = readName(), code = ($('cd').value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length < 3) { $('netmsg').textContent = 'Type the room code first.'; return; }
+  $('netmsg').textContent = 'Joining...';
+  netStart(false, code, name, () => { startWalk(); toast('Joined room ' + code); }, showNetCard);
+}
+
 showMenu();
 requestAnimationFrame(frame);
 }
