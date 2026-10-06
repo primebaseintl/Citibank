@@ -1552,6 +1552,7 @@ const bayTex = makeTex(256, 512, (g, w, h) => {
 const bayMat = new T.MeshBasicMaterial({ map: bayTex, transparent: true, depthWrite: false, opacity: 0.5, fog: false });
 const bayMesh = plane(BAY.w, BAY.l, bayMat, BAY.x, 0.04, BAY.z, -Math.PI / 2, 0);
 bayMesh.receiveShadow = false;
+const beamMat = new T.MeshBasicMaterial({ color: 0xf0cf7a, transparent: true, opacity: 0.22, side: T.DoubleSide, depthWrite: false, fog: false });
 const bayBeam = new T.Mesh(new T.CylinderGeometry(1.5, 1.5, 18, 18, 1, true), beamMat);
 bayBeam.position.set(BAY.x, 9, BAY.z); bayBeam.visible = false; scene.add(bayBeam);
 
