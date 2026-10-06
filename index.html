@@ -1618,7 +1618,7 @@ const fanfare = () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => b
 $('snd').addEventListener('click', () => { muted = !muted; $('snd').textContent = muted ? 'Sound off' : 'Sound on'; });
 
 /* --- HUD pieces --- */
-const pipsEl = $('pips'); for (let i = 0; i < G.total; i++) pipsEl.appendChild(document.createElement('i'));
+const pipsEl = $('pips'); if (pipsEl) { for (let i = 0; i < G.total; i++) pipsEl.appendChild(document.createElement('i')); }
 let toastTimer = 0;
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1800); }
 const fmtT = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
