@@ -63,6 +63,8 @@
   @media (hover: none) { #keyhelp { display: none; } }
   @media (max-width: 600px) { #pips { display: none; } #clock { font-size: 34px; } }
 
+  #mic { display: none; }
+  #util button.live { background: #c9a24a; color: #14110f; }
   .field { display: block; width: 100%; min-height: 50px; margin: 0 0 10px; padding: 0 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,.35);
     background: rgba(20,17,15,.35); color: #fff; font: inherit; font-size: 18px; user-select: text; -webkit-user-select: text; }
   .field:focus-visible { outline: 3px solid #f0cf7a; outline-offset: 2px; }
@@ -134,7 +136,7 @@
   <div id="count"></div>
   <div id="keyhelp">W A S D or arrow keys to drive, Space to drift, R to restart</div>
   <button id="act">Get in car</button>
-  <div id="util"><button id="snd">Sound on</button><button id="restartB">Restart</button><button id="menuB">Menu</button></div>
+  <div id="util"><button id="mic">Mic off</button><button id="snd">Sound on</button><button id="restartB">Restart</button><button id="menuB">Menu</button></div>
 </div>
 
 <!-- touch pedals -->
@@ -1657,6 +1659,7 @@ function frame(now) {
   stepNPCs(dt);
   updateRemotes(dt);
   netTick(dt);
+  voiceTick(dt);
   updateDoors(dt);
   if (G.mode === 'drive') updateDrive(dt);
   else {
@@ -1701,6 +1704,7 @@ function getRemote(id, name) {
   return (remotes[id] = { id, name, h, car, mode: 2, x: 0, z: 0, ph: 0, v: 0, cx: 0, cz: 0, ch: 0, cs: 0, ax: 0, az: 0, aph: 0, acx: 0, acz: 0, ach: 0, last: performance.now() });
 }
 function dropRemote(id) {
+  voiceDrop(id);
   const r = remotes[id]; if (!r) return;
   scene.remove(r.h.root); scene.remove(r.car.g); delete remotes[id]; toast(r.name + ' left');
 }
@@ -1711,6 +1715,7 @@ function onState(d) {
     r = getRemote(d.id, String(d.n || 'Guest').slice(0, 14));
     Object.assign(r, { ax: num(d.x), az: num(d.z), aph: num(d.p), acx: num(d.cx), acz: num(d.cz), ach: num(d.ch) });
     toast(r.name + ' joined');
+    if (net.id < d.id) voiceCall(d.id);
   }
   Object.assign(r, { mode: num(d.m), x: num(d.x), z: num(d.z), ph: num(d.p), v: num(d.v), cx: num(d.cx), cz: num(d.cz), ch: num(d.ch), cs: num(d.cs), last: performance.now() });
 }
@@ -1751,16 +1756,21 @@ function netStop(msg) {
   try { net.peer && net.peer.destroy(); } catch (e) {}
   net.on = false; net.host = false; net.conns = []; net.peer = null;
   Object.keys(remotes).forEach(dropRemote);
+  Object.keys(voice.peers).forEach(voiceDrop);
+  if (voice.micStream) { voice.micStream.getTracks().forEach(t => t.stop()); voice.micStream = null; }
+  voice.micOn = false; if (voice.micGain) voice.micGain.gain.value = 0;
+  $('mic').style.display = 'none'; $('mic').textContent = 'Mic off'; $('mic').classList.remove('live');
   $('room').style.display = 'none';
   if (msg) toast(msg);
 }
 function netStart(host, code, name, done, fail) {
   if (typeof Peer === 'undefined') { fail('The multiplayer library could not load. Check your connection and reload.'); return; }
+  voiceInit();
   net.name = name; let finished = false;
   const bad = m => { if (finished) return; finished = true; try { net.peer && net.peer.destroy(); } catch (e) {} net.peer = null; fail(m); };
-  const live = () => { finished = true; net.on = true; net.code = code; net.roomT = 0; $('room').style.display = 'flex'; START.x = -6 - (hashStr(net.id) % 5) * 6; if (G.mode === 'menu') { player.x = START.x; } done(); };
+  const live = () => { finished = true; net.on = true; net.code = code; net.roomT = 0; $('room').style.display = 'flex'; $('mic').style.display = 'block'; START.x = -6 - (hashStr(net.id) % 5) * 6; if (G.mode === 'menu') { player.x = START.x; } done(); };
   if (host) {
-    const p = new Peer('harborvalet-' + code); net.peer = p;
+    const p = new Peer('harborvalet-' + code); net.peer = p; p.on('call', c => { voiceInit(); c.answer(voice.dest.stream); voiceAttach(c.peer, c); });
     p.on('open', id => { net.id = id; net.host = true; live(); });
     p.on('connection', c => {
       c.on('open', () => { net.conns.push(c); });
@@ -1769,7 +1779,7 @@ function netStart(host, code, name, done, fail) {
     });
     p.on('error', e => bad(e.type === 'unavailable-id' ? 'That code is already in use. Try again.' : 'Could not open the room (' + e.type + ').'));
   } else {
-    const p = new Peer(); net.peer = p;
+    const p = new Peer(); net.peer = p; p.on('call', c => { voiceInit(); c.answer(voice.dest.stream); voiceAttach(c.peer, c); });
     p.on('open', id => {
       net.id = id;
       const c = p.connect('harborvalet-' + code, { serialization: 'json' });
@@ -1781,6 +1791,82 @@ function netStart(host, code, name, done, fail) {
     p.on('error', e => bad(e.type === 'peer-unavailable' ? 'No room found with that code.' : 'Connection problem (' + e.type + ').'));
   }
 }
+/* ---------- proximity voice chat ----------
+   Everyone is wired to everyone by a WebRTC audio call. What you hear is turned up or down by how
+   close that player is to you (about 14 m), softer through walls, and panned left or right. */
+const voice = { ctx: null, dest: null, micGain: null, micSrc: null, micStream: null, peers: {}, micOn: false, t: 0 };
+const _vd = new T.Vector3();
+function voiceInit() {
+  if (voice.ctx) return;
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  voice.ctx = new AC(); voice.dest = voice.ctx.createMediaStreamDestination();
+  voice.micGain = voice.ctx.createGain(); voice.micGain.gain.value = 0; voice.micGain.connect(voice.dest);
+}
+['pointerdown', 'keydown', 'touchend'].forEach(ev => addEventListener(ev, () => { if (voice.ctx && voice.ctx.state === 'suspended') voice.ctx.resume(); }, { passive: true }));
+function voiceDetach(v) {
+  try { v.src && v.src.disconnect(); v.gain && v.gain.disconnect(); v.pan && v.pan.disconnect(); } catch (e) {}
+  if (v.el) v.el.srcObject = null;
+  v.src = v.gain = v.pan = v.el = null;
+}
+function voiceAttach(id, call) {
+  let v = voice.peers[id]; if (!v) v = voice.peers[id] = { call: null, src: null, gain: null, pan: null, el: null };
+  if (v.call && v.call !== call) { try { v.call.close(); } catch (e) {} }
+  v.call = call;
+  call.on('stream', st => {
+    if (!voice.ctx) return;
+    voiceDetach(v);
+    v.el = new Audio(); v.el.muted = true; v.el.srcObject = st; v.el.play().catch(() => {});   /* keeps the stream alive in Chrome */
+    v.src = voice.ctx.createMediaStreamSource(st); v.gain = voice.ctx.createGain(); v.gain.gain.value = 0; v.src.connect(v.gain);
+    if (voice.ctx.createStereoPanner) { v.pan = voice.ctx.createStereoPanner(); v.gain.connect(v.pan); v.pan.connect(voice.ctx.destination); }
+    else v.gain.connect(voice.ctx.destination);
+  });
+  call.on('close', () => { if (v.call === call) voiceDetach(v); });
+  call.on('error', () => {});
+}
+function voiceCall(id) {
+  if (!net.peer || !voice.dest || voice.peers[id]) return;
+  try { voiceAttach(id, net.peer.call(id, voice.dest.stream)); } catch (e) {}
+}
+function voiceDrop(id) {
+  const v = voice.peers[id]; if (!v) return;
+  try { v.call && v.call.close(); } catch (e) {}
+  voiceDetach(v); delete voice.peers[id];
+}
+function voiceTick(dt) {
+  if (!voice.ctx) return;
+  voice.t -= dt; if (voice.t > 0) return; voice.t = 0.1;
+  let lx, lz;
+  if (G.mode === 'foot') { lx = me.x; lz = me.z; } else if (G.mode === 'drive') { lx = player.x; lz = player.z; } else { lx = camera.position.x; lz = camera.position.z; }
+  camera.getWorldDirection(_vd); const rx = -_vd.z, rz = _vd.x, rl = Math.hypot(rx, rz) || 1;
+  const myZone = zoneAt(lx, lz), now = voice.ctx.currentTime;
+  Object.keys(voice.peers).forEach(id => {
+    const v = voice.peers[id]; if (!v.gain) return;
+    const r = remotes[id]; let g = 0, pan = 0;
+    if (r) {
+      const sx = r.mode === 0 ? r.ax : r.acx, sz = r.mode === 0 ? r.az : r.acz, dx = sx - lx, dz = sz - lz, d = Math.hypot(dx, dz);
+      g = Math.pow(clamp(1 - (d - 1.5) / 12.5), 2);
+      if (g > 0 && zoneAt(sx, sz) !== myZone) g *= 0.35;
+      pan = clamp((dx * rx + dz * rz) / (Math.max(d, 0.5) * rl), -1, 1) * 0.8;
+    }
+    v.gain.gain.setTargetAtTime(g, now, 0.06); if (v.pan) v.pan.pan.setTargetAtTime(pan, now, 0.06);
+  });
+}
+async function toggleMic() {
+  voiceInit(); if (!voice.ctx) { toast('Voice is not supported here'); return; }
+  if (voice.ctx.state === 'suspended') voice.ctx.resume();
+  if (!voice.micStream) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('The microphone needs a secure (https) page'); return; }
+    try {
+      voice.micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      voice.micSrc = voice.ctx.createMediaStreamSource(voice.micStream); voice.micSrc.connect(voice.micGain); voice.micOn = false;
+    } catch (e) { toast('Microphone blocked. Allow it in your browser settings'); return; }
+  }
+  voice.micOn = !voice.micOn; voice.micGain.gain.value = voice.micOn ? 1 : 0;
+  $('mic').textContent = voice.micOn ? 'Mic on' : 'Mic off'; $('mic').classList.toggle('live', voice.micOn);
+  toast(voice.micOn ? 'Players near you can hear you' : 'Mic muted');
+}
+$('mic').addEventListener('click', toggleMic);
+
 function readName() {
   const nm = ($('nm').value || '').trim().replace(/[^\w ]/g, '').slice(0, 14) || ('Guest' + Math.floor(10 + Math.random() * 89));
   try { localStorage.setItem('harborValetName', nm); } catch (e) {}
