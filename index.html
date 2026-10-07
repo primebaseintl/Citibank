@@ -109,6 +109,9 @@
     background: transparent; color: #fff; font-size: 18px; font-weight: 700; padding: 0 16px; cursor: pointer; }
   .btn.primary { background: #c9a24a; border-color: #c9a24a; color: #14110f; }
   .btn:focus-visible, #util button:focus-visible, #home:focus-visible { outline: 3px solid #f0cf7a; outline-offset: 2px; }
+  .fg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 4px 0 10px; max-height: 46vh; overflow-y: auto; touch-action: pan-y; }
+  .fb { min-height: 48px; border-radius: 12px; border: 2px solid rgba(255,255,255,.35); background: transparent; color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; }
+  .fb:focus-visible { outline: 3px solid #f0cf7a; outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { #toast, #arrow { transition: none; } }
 </style>
 </head>
@@ -254,6 +257,69 @@ const tileTex = makeTex(512, 512, (g, w, h) => {
   for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { g.fillStyle = `hsl(38,${rnd(22, 30)}%,${rnd(80, 86)}%)`; g.fillRect(i * 128, j * 128, 128, 128); }
   g.fillStyle = 'rgba(90,80,60,.45)';
   for (let i = 0; i <= 4; i++) { g.fillRect(i * 128 - 1, 0, 3, h); g.fillRect(0, i * 128 - 1, w, 3); }
+});
+/* ---- floor patterns: grey tiles, so every room can tint them its own colour ---- */
+const grn = (g, w, h, n) => { for (let i = 0; i < n; i++) { g.fillStyle = `rgba(${rand() < .5 ? '0,0,0' : '255,255,255'},${rnd(0.02, 0.07)})`; g.fillRect(rnd(0, w), rnd(0, h), 2, 2); } };
+const gray = (lo, hi) => { const v = Math.floor(rnd(lo, hi)); return `rgb(${v},${v},${v})`; };
+const herringTex = makeTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#5c5c5c'; g.fillRect(0, 0, w, h); g.lineWidth = 12;
+  for (let c = -1; c < 9; c++) for (let r = -1; r < 9; r++) {
+    const x = c * 32, y = r * 32 + ((c & 1) ? 16 : 0);
+    g.strokeStyle = gray(165, 240); g.beginPath(); g.moveTo(x + 3, y + 3); g.lineTo(x + 15, y + 15); g.stroke();
+    g.strokeStyle = gray(165, 240); g.beginPath(); g.moveTo(x + 17, y + 15); g.lineTo(x + 29, y + 3); g.stroke();
+  }
+  grn(g, w, h, 1500);
+});
+const parquetTex = makeTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#505050'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) for (let k = 0; k < 4; k++) {
+    g.fillStyle = gray(170, 245);
+    if ((i + j) % 2 === 0) g.fillRect(i * 64 + 1, j * 64 + k * 16 + 1, 62, 14); else g.fillRect(i * 64 + k * 16 + 1, j * 64 + 1, 14, 62);
+  }
+  grn(g, w, h, 1200);
+});
+const checkTex = makeTex(256, 256, (g, w, h) => {
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { g.fillStyle = (i + j) % 2 ? '#8e8e8e' : '#f3f3f3'; g.fillRect(i * 64, j * 64, 64, 64); }
+  g.fillStyle = 'rgba(0,0,0,.28)'; for (let i = 0; i <= 4; i++) { g.fillRect(i * 64 - 1, 0, 2, h); g.fillRect(0, i * 64 - 1, w, 2); }
+  grn(g, w, h, 1500);
+});
+const hexTex = makeTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#6a6a6a'; g.fillRect(0, 0, w, h);
+  const hw = 32, r = 21.33;
+  for (let row = -1; row < 9; row++) for (let col = -1; col < 9; col++) {
+    const cx = col * hw + ((row & 1) ? hw / 2 : 0), cy = row * 32 + 16;
+    g.fillStyle = gray(200, 248); g.beginPath();
+    g.moveTo(cx, cy - r + 1.5); g.lineTo(cx + hw / 2 - 1.5, cy - r / 2); g.lineTo(cx + hw / 2 - 1.5, cy + r / 2);
+    g.lineTo(cx, cy + r - 1.5); g.lineTo(cx - hw / 2 + 1.5, cy + r / 2); g.lineTo(cx - hw / 2 + 1.5, cy - r / 2); g.closePath(); g.fill();
+  }
+  grn(g, w, h, 800);
+});
+const stripeTex = makeTex(256, 256, (g, w, h) => {
+  for (let x = 0; x < w; x += 32) { g.fillStyle = gray(225, 245); g.fillRect(x, 0, 20, h); g.fillStyle = gray(165, 185); g.fillRect(x + 20, 0, 12, h); }
+  grn(g, w, h, 5000);
+});
+const diamondTex = makeTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#d8d8d8'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+    const cx = i * 64 + 32, cy = j * 64 + 32;
+    g.fillStyle = '#8f8f8f'; g.beginPath(); g.moveTo(cx, cy - 30); g.lineTo(cx + 30, cy); g.lineTo(cx, cy + 30); g.lineTo(cx - 30, cy); g.closePath(); g.fill();
+    g.fillStyle = '#f0f0f0'; g.beginPath(); g.moveTo(cx, cy - 12); g.lineTo(cx + 12, cy); g.lineTo(cx, cy + 12); g.lineTo(cx - 12, cy); g.closePath(); g.fill();
+  }
+  grn(g, w, h, 4000);
+});
+const terrazzoTex = makeTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#e9e9e9'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 520; i++) { g.fillStyle = gray(90, 215); const s = rnd(2, 6); g.fillRect(rnd(0, w), rnd(0, h), s, s * rnd(0.5, 1.2)); }
+});
+const slateTex = makeTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#4a4a4a'; g.fillRect(0, 0, w, h);
+  let y = 0; while (y < h) { const rh = Math.min(h - y, rnd(34, 60)); let x = 0; while (x < w) { const bw = Math.min(w - x, rnd(40, 90)); g.fillStyle = gray(150, 215); g.fillRect(x + 2, y + 2, bw - 4, rh - 4); x += bw; } y += rh; }
+  grn(g, w, h, 3000);
+});
+const mosaicTex = makeTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#707070'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) { g.fillStyle = gray(175, 250); g.fillRect(i * 16 + 1, j * 16 + 1, 14, 14); }
+  grn(g, w, h, 600);
 });
 const paveTex = makeTex(256, 256, (g, w, h) => {
   g.fillStyle = '#b4ab9d'; g.fillRect(0, 0, w, h);
@@ -492,18 +558,20 @@ cladding(0.4, 5, 34.6, -30.35, 2.5, -17); cladding(0.4, 5, 34.6, 30.35, 2.5, -17
 box(63, 0.6, 35.5, tiled(stoneTex, 14, 2), 0, 5.3, -17.2, null, true);
 
 const towerMats = [
-  facadeMat(33, 16, 8, 5, 0.4), facadeMat(33, 16, 8, 5, 0.4), std(0x8b8173, 0.9),
-  std(0x8b8173, 0.9), facadeMat(56, 16, 14, 5, 0.42), facadeMat(56, 16, 14, 5, 0.3)
+  facadeMat(33, 17, 8, 5, 0.4), facadeMat(33, 17, 8, 5, 0.4), std(0x8b8173, 0.9),
+  std(0x8b8173, 0.9), facadeMat(56, 17, 14, 5, 0.42), facadeMat(56, 17, 14, 5, 0.3)
 ];
-const tower = new T.Mesh(new T.BoxGeometry(56, 16, 33), towerMats);
-tower.position.set(0, 13.6, -17.5); tower.castShadow = true; tower.receiveShadow = true; scene.add(tower);
-box(56.6, 0.8, 33.6, std(0x7a7164, 0.9), 0, 21.9, -17.5, null, true);
-[[0, 22.5, -1.0, 56.6, 0.5, 0.5], [0, 22.5, -34.0, 56.6, 0.5, 0.5], [-28.1, 22.5, -17.5, 0.5, 0.5, 33.6], [28.1, 22.5, -17.5, 0.5, 0.5, 33.6]]
+towerMats.forEach(m => { m.side = T.DoubleSide; });          /* you can walk inside now, so the inside of the walls must show */
+const tower = new T.Mesh(new T.BoxGeometry(56, 17, 33), towerMats);
+tower.position.set(0, 15.3, -17.5); tower.castShadow = true; tower.receiveShadow = true; scene.add(tower);
+box(56.2, 1.17, 33.2, std(0x7a7164, 0.9), 0, 6.185, -17.5, null, true);   /* stone plinth between the lobby roof and the first guest floor */
+box(56.6, 0.8, 33.6, std(0x7a7164, 0.9), 0, 24.1, -17.5, null, true);
+[[0, 24.7, -1.0, 56.6, 0.5, 0.5], [0, 24.7, -34.0, 56.6, 0.5, 0.5], [-28.1, 24.7, -17.5, 0.5, 0.5, 33.6], [28.1, 24.7, -17.5, 0.5, 0.5, 33.6]]
   .forEach(p => box(p[3], p[4], p[5], std(0x7a7164, 0.9), p[0], p[1], p[2], null, true));
-box(8, 2.4, 6, std(0x8b8479, 0.8), -12, 23.4, -22); box(6, 1.8, 5, std(0x8b8479, 0.8), 14, 23.1, -26);
+box(8, 2.4, 6, std(0x8b8479, 0.8), -12, 25.6, -22); box(6, 1.8, 5, std(0x8b8479, 0.8), 14, 25.3, -26);
 const signMat = new T.MeshBasicMaterial({ map: labelTex('HARBOR HOTEL', 1024, 160, '700 96px "Bricolage Grotesque", Georgia, serif', '#f0cf7a', '#1f3a40') });
-box(26, 3.2, 0.5, std(0x1f3a40, 0.6), 0, 24.4, -2.2, null, true);
-plane(25.4, 2.8, signMat, 0, 24.4, -1.94, 0, 0);
+box(26, 3.2, 0.5, std(0x1f3a40, 0.6), 0, 26.6, -2.2, null, true);
+plane(25.4, 2.8, signMat, 0, 26.6, -1.94, 0, 0);
 
 /* front glass wall of the podium with the entrance gap */
 const glassMat = new T.MeshPhysicalMaterial({ color: 0x9fc4d4, transparent: true, opacity: 0.2, roughness: 0.05, metalness: 0, side: T.DoubleSide });
@@ -593,6 +661,7 @@ for (let i = 0; i < 46; i++) {
   const side = i % 4, w = rnd(18, 34), d = rnd(18, 30), h = rnd(26, 70);
   let x, z;
   if (side === 0) { x = rnd(-300, 560); z = -rnd(80, 170); } else if (side === 1) { x = -rnd(250, 330); z = rnd(-120, 180); } else if (side === 2) { x = rnd(520, 600); z = rnd(-120, 180); } else { x = rnd(-250, 540); z = rnd(235, 300); }
+  if (side === 3) continue;
   const m = tiled(cityA.map, w / 14, h / 22, { emissive: 0xffffff, roughness: 0.9 });
   const e = cityA.em.clone(); e.needsUpdate = true; e.repeat.set(w / 14, h / 22); m.emissiveMap = e;
   box(w, h, d, m, x, h / 2, z, null, false);
@@ -603,15 +672,16 @@ const wallPlaster = std(0xe9dfcc, 0.95), wallCorr = std(0xd9cdb8, 0.95);
 const H5 = 5;
 
 /* --- structure --- */
-wall('z', -30, -34, 0, [], H5, wallPlaster);
-wall('z', 30, -34, 0, [], H5, wallPlaster);
-wall('x', -34, -30, 30, [], H5, wallPlaster);
+const wallTan = std(0xdcc7a1, 0.95), wallAqua = std(0xcfe6e6, 0.95), wallSage = std(0xcdd8c0, 0.95), wallLilac = std(0xd8d0e0, 0.95);
+wall('z', -30, -34, 0, [], H5, wallTan);
+wall('z', 30, -34, 0, [], H5, wallAqua);
+wall('x', -34, -30, 30, [], H5, wallSage);
 wall('z', -10, -16, 0, [[-11, -5, 3.1]], H5, wallPlaster);
 wall('z', 10, -16, 0, [[-11, -5, 3.1]], H5, wallPlaster);
 wall('x', -16, -30, 30, [[-2.2, 2.2, 2.9]], H5, wallPlaster);
 wall('x', -22, -30, 30, [[-15.5, -12.5, 2.5], [12.5, 15.5, 2.5]], H5, wallCorr);
-wall('z', -8, -34, -22, [], H5, wallPlaster);
-wall('z', 8, -34, -22, [], H5, wallPlaster);
+wall('z', -8, -34, -22, [], H5, wallLilac);
+wall('z', 8, -34, -22, [], H5, wallLilac);
 
 /* wall colliders for walking (the openings stay clear) */
 rectC(-30.15, -34.15, -29.85, 0); rectC(29.85, -34.15, 30.15, 0); rectC(-30, -34.15, 30, -33.85);
@@ -623,13 +693,13 @@ rectC(-30, -0.1, -doorHalf, 0.1); rectC(doorHalf, -0.1, 30, 0.1);
 
 /* --- floors + ceilings --- */
 floorPlane(-10, -16, 10, 0, tex1(marbleTex, 20, 16, 2, { roughness: 0.25, metalness: 0.05 }), 0);
-floorPlane(-30, -16, -10, 0, tex1(woodTex, 20, 16, 2, { roughness: 0.5 }), 0);
-floorPlane(10, -16, 30, 0, tex1(tileTex, 20, 16, 2, { roughness: 0.35 }), 0);
-const corridorFloor = tex1(carpetTex, 60, 6, 1.5, { color: 0x4a5560, roughness: 1 });
+floorPlane(-30, -16, -10, 0, tex1(herringTex, 20, 16, 2.2, { color: 0xd9b48a, roughness: 0.5 }), 0);
+floorPlane(10, -16, 30, 0, tex1(hexTex, 20, 16, 1.4, { color: 0xbfe3ee, roughness: 0.3 }), 0);
+const corridorFloor = tex1(diamondTex, 60, 6, 1.5, { color: 0x56627a, roughness: 1 });
 floorPlane(-30, -22, 30, -16, corridorFloor, 0);
-floorPlane(-30, -34, -8, -22, tex1(carpetTex, 22, 12, 1.5, { color: 0x9a8f7e, roughness: 1 }), 0);
-floorPlane(8, -34, 30, -22, tex1(woodTex, 22, 12, 2, { roughness: 0.5 }), 0);
-floorPlane(-8, -34, 8, -22, tex1(carpetTex, 16, 12, 1.5, { color: 0x777777, roughness: 1 }), 0);
+floorPlane(-30, -34, -8, -22, tex1(stripeTex, 22, 12, 1.4, { color: 0xb7a58a, roughness: 1 }), 0);
+floorPlane(8, -34, 30, -22, tex1(parquetTex, 22, 12, 2, { color: 0x8a5a3a, roughness: 0.5 }), 0);
+floorPlane(-8, -34, 8, -22, tex1(checkTex, 16, 12, 2, { color: 0xb0a89a, roughness: 0.4 }), 0);
 ceilPlane(-10, -16, 10, 0, 5); ceilPlane(-30, -16, -10, 0, 4); ceilPlane(10, -16, 30, 0, 5);
 ceilPlane(-30, -22, 30, -16, 3); ceilPlane(-30, -34, -8, -22, 3); ceilPlane(8, -34, 30, -22, 3.4); ceilPlane(-8, -34, 8, -22, 3);
 plane(60, 2.4, new T.MeshStandardMaterial({ map: runnerTex, roughness: 1 }), 0, 0.013, -19, -Math.PI / 2, 0);
@@ -1001,20 +1071,20 @@ const ob = (x, z, r) => obst.push({ x, z, r });
 [-60, -30, 0, 30, 60].forEach(x => ob(x, 31.5, 0.25));
 [-12, 12].forEach(x => { ob(x - 0.7, 6, 0.8); ob(x + 0.7, 6, 0.8); });
 ob(-5, 6.4, 0.3); ob(5, 6.4, 0.3);
-const WALL_Z = 0.6, XMIN = -210, XMAX = 490, ZMIN = -50, ZMAX = 195;
+const WALL_Z = 0.6, XMIN = -210, XMAX = 490, ZMIN = -50, ZMAX = 460;
 /* =====================================================================
    HARBOR TOWN: streets and buildings laid out like the sketch.
    Every building is two storeys (a duplex) with real rooms, doors, windows and a climbable stair.
    ===================================================================== */
 const FH = 3.4, SLAB = 0.25;                       /* floor height, slab thickness */
-const LVL = y => (y > FH * 0.5 ? 1 : 0);
-const stairs = [], bRects = [], bInfo = [], roomInfo = [];
+const LVL = y => Math.max(0, Math.round(y / FH));          /* floor number from a height: 0 ground, 1 upstairs, 2.. tower floors */
+const stairs = [], bRects = [], bInfo = [], roomInfo = [], towers = [], elevators = [];
 
 /* merges many boxes into a few meshes (one per material), so a whole town stays cheap to draw */
 const UB = new T.BoxGeometry(1, 1, 1);
 const UBp = UB.attributes.position.array, UBn = UB.attributes.normal.array, UBu = UB.attributes.uv.array, UBi = UB.index.array;
 const tmpC = new T.Color();
-const TEXM = { wood: 0.5, tile: 0.5, carpet: 0.7, conc: 0.3 };
+const TEXM = { wood: 0.5, tile: 0.5, carpet: 0.7, conc: 0.3, herring: 0.5, parquet: 0.5, check: 0.5, hex: 0.7, stripe: 0.9, diamond: 0.6, terrazzo: 0.5, slate: 0.4, mosaic: 0.8 };
 const bm = {
   solid: new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.88 }),
   glow: new T.MeshBasicMaterial({ vertexColors: true }),
@@ -1022,7 +1092,16 @@ const bm = {
   wood: new T.MeshStandardMaterial({ vertexColors: true, map: woodTex, roughness: 0.55 }),
   tile: new T.MeshStandardMaterial({ vertexColors: true, map: tileTex, roughness: 0.4 }),
   carpet: new T.MeshStandardMaterial({ vertexColors: true, map: carpetTex, roughness: 1 }),
-  conc: new T.MeshStandardMaterial({ vertexColors: true, map: paveTex, roughness: 0.9 })
+  conc: new T.MeshStandardMaterial({ vertexColors: true, map: paveTex, roughness: 0.9 }),
+  herring: new T.MeshStandardMaterial({ vertexColors: true, map: herringTex, roughness: 0.5 }),
+  parquet: new T.MeshStandardMaterial({ vertexColors: true, map: parquetTex, roughness: 0.5 }),
+  check: new T.MeshStandardMaterial({ vertexColors: true, map: checkTex, roughness: 0.35 }),
+  hex: new T.MeshStandardMaterial({ vertexColors: true, map: hexTex, roughness: 0.35 }),
+  stripe: new T.MeshStandardMaterial({ vertexColors: true, map: stripeTex, roughness: 1 }),
+  diamond: new T.MeshStandardMaterial({ vertexColors: true, map: diamondTex, roughness: 1 }),
+  terrazzo: new T.MeshStandardMaterial({ vertexColors: true, map: terrazzoTex, roughness: 0.4 }),
+  slate: new T.MeshStandardMaterial({ vertexColors: true, map: slateTex, roughness: 0.7 }),
+  mosaic: new T.MeshStandardMaterial({ vertexColors: true, map: mosaicTex, roughness: 0.3 })
 };
 function Batch() { this.g = {}; }
 Batch.prototype.slot = function (k) { return this.g[k] || (this.g[k] = { p: [], n: [], u: [], c: [], i: [], v: 0 }); };
@@ -1059,7 +1138,7 @@ Batch.prototype.build = function (parent) {
 };
 
 /* ---------- ground: grass, pavements, three roads ---------- */
-floorPlane(-700, -400, 900, 500, tiled(grassTex, 270, 150, { roughness: 1 }), -0.03);
+floorPlane(-700, -400, 900, 200, tiled(grassTex, 270, 100, { roughness: 1 }), -0.03);
 floorPlane(-210, 0, 490, 14, tex1(paveTex, 700, 14, 3.2), 0.0);                 /* promenade in front of the top row */
 floorPlane(-210, 14, 490, 30, tex1(asphaltTex, 700, 16, 6, { roughness: 0.95 }), 0.0);   /* Harbor Road */
 floorPlane(-210, 30, 120, 114, tex1(paveTex, 330, 84, 3.2), 0.0);               /* middle band: factory block */
@@ -1089,6 +1168,132 @@ floorPlane(-210, 130, 490, 200, tex1(paveTex, 700, 70, 3.2), 0.0);              
   B.build(L);
 })();
 
+/* =====================================================================
+   THE HARBOR: a sea along the south edge of town, a long bridge, and an island
+   ===================================================================== */
+const QZ = 200, BX = 286, SEA_Y = -1.1, ISL = { x: BX, z: 384, r: 62 }, BR_END = 324;
+const wRects = [];
+const waterBlock = (x1, z1, x2, z2) => { rectC(x1, z1, x2, z2); wRects.push({ x1: Math.min(x1, x2), x2: Math.max(x1, x2), z1: Math.min(z1, z2), z2: Math.max(z1, z2) }); };
+waterBlock(XMIN - 40, QZ - 0.3, BX - 8, BR_END);        /* the sea on both sides of the bridge */
+waterBlock(BX + 8, QZ - 0.3, XMAX + 40, BR_END);
+const seaTex = makeTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#1d6f93'; g.fillRect(0, 0, w, h);
+  for (let k = 0; k < 90; k++) { g.fillStyle = `rgba(10,50,90,${rnd(0.06, 0.16)})`; g.fillRect(rnd(0, w), rnd(0, h), rnd(20, 70), rnd(3, 9)); }
+  for (let k = 0; k < 260; k++) {
+    const x = rnd(0, w), y = rnd(0, h), l = rnd(14, 46);
+    g.strokeStyle = `rgba(255,255,255,${rnd(0.06, 0.24)})`; g.lineWidth = rnd(1, 2.4); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + l / 2, y - rnd(2, 5), x + l, y); g.stroke();
+  }
+});
+const seaMat = tiled(seaTex, 150, 62, { roughness: 0.1, metalness: 0.25, emissive: 0x0b3b55, emissiveIntensity: 0.55 });
+floorPlane(-900, QZ, 1100, 1000, seaMat, SEA_Y);
+(function () {
+  const B = new Batch(), pole = 0x25282b;
+  const quay = (x1, x2) => B.box('conc', x2 - x1, 2.6, 1.2, (x1 + x2) / 2, -1.3, QZ + 0.6, 0xb5aca0);
+  quay(-900, BX - 8); quay(BX + 8, 1100);
+  for (let x = -205; x <= 485; x += 10) { if (Math.abs(x - BX) < 10) continue; B.box('solid', 0.3, 0.6, 0.3, x, 0.3, QZ - 0.7, pole); B.box('glow', 0.32, 0.06, 0.32, x, 0.62, QZ - 0.7, 0xffe2a8); }
+  /* the deck */
+  B.box('conc', 16, 0.8, 126, BX, -0.4, 263, 0xc9c1b4);
+  B.box('solid', 9.6, 0.04, 126, BX, 0.02, 263, 0x3b3b40);
+  for (let z = QZ + 4; z < BR_END; z += 8) B.box('solid', 0.2, 0.02, 3.5, BX, 0.05, z, 0xeeeeee);
+  for (let z = 134; z < QZ - 2; z += 8) B.box('solid', 0.2, 0.02, 3.5, BX, 0.05, z, 0xeeeeee);
+  [-1, 1].forEach(sd => {
+    B.box('solid', 0.18, 1.1, 126, BX + sd * 7.95, 0.55, 263, 0x2a3138); B.box('solid', 0.3, 0.08, 126, BX + sd * 7.95, 1.14, 263, 0xd8d2c4);
+    B.box('solid', 0.3, 0.1, 126, BX + sd * 4.95, 0.05, 263, 0xa59d90);
+    for (let z = QZ + 7; z < BR_END; z += 14) {
+      const x = BX + sd * 7.6;
+      B.box('solid', 0.12, 5.5, 0.12, x, 2.75, z, pole); B.box('solid', 1.0, 0.07, 0.07, x - sd * 0.5, 5.5, z, pole); B.box('glow', 0.4, 0.3, 0.4, x - sd * 0.95, 5.4, z, 0xffe2a8);
+    }
+  });
+  [225, 263, 301].forEach(z => B.box('conc', 12, 4.2, 3, BX, -2.7, z, 0x9a9288));      /* piers */
+  for (let z = QZ + 20; z < BR_END; z += 42) anchor(BX, 5, z, 0xffe0b0, 1.0, 24);
+  B.build();
+  floorPlane(BX - 8, 130, BX + 8, QZ, tex1(asphaltTex, 16, 70, 6, { roughness: 0.95 }), 0.02);          /* Bridge Road */
+  floorPlane(BX - 8, BR_END, BX + 8, ISL.z - 16, tex1(asphaltTex, 16, 44, 6, { roughness: 0.95 }), 0.02);
+  /* two white pylons with fans of cables */
+  const steel = std(0xe4dfd2, 0.45, 0.3), strut = (a, b, r, mat) => {
+    const d = b.clone().sub(a), len = d.length(), m = new T.Mesh(new T.CylinderGeometry(r, r, len, 6), mat);
+    m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), d.clone().normalize()); scene.add(m); return m;
+  };
+  [QZ + 38, QZ + 92].forEach(pz => {
+    [-1, 1].forEach(sd => {
+      const px = BX + sd * 9.8;
+      box(1.6, 29, 1.6, steel, px, 11, pz, null, false);
+      for (let k = 0; k < 5; k++) [-1, 1].forEach(dz => {
+        const zz = pz + dz * (8 + k * 8); if (zz < QZ + 2 || zz > BR_END - 2) return;
+        strut(P(px, 24.2 - k * 0.5, pz), P(BX + sd * 8, 1.2, zz), 0.07, steel);
+      });
+    });
+    box(21.6, 1.3, 1.4, steel, BX, 24.6, pz, null, false); box(21.6, 1.0, 1.2, steel, BX, 15, pz, null, false);
+  });
+  /* sign gantry over the road down to the bridge */
+  const sgz = 150; [-1, 1].forEach(sd => { box(0.5, 7, 0.5, std(pole, 0.5, 0.5), BX + sd * 9.6, 3.5, sgz, null, false); ob(BX + sd * 9.6, sgz, 0.5); });
+  box(20.4, 0.4, 0.5, std(pole, 0.5, 0.5), BX, 7.1, sgz, null, false);
+  plane(14, 2.2, new T.MeshBasicMaterial({ map: labelTex('ISLAND BRIDGE', 1024, 160, '700 96px "Bricolage Grotesque", Georgia, serif', '#f6e3ae', '#1f3a40') }), BX, 5.5, sgz - 0.3, 0, Math.PI);
+})();
+/* the island */
+(function () {
+  const sandTex = makeTex(256, 256, (g, w, h) => { g.fillStyle = '#dcc790'; g.fillRect(0, 0, w, h); for (let i = 0; i < 6000; i++) { g.fillStyle = `rgba(${rand() < .5 ? '120,90,40' : '255,245,210'},${rnd(0.05, 0.16)})`; g.fillRect(rnd(0, w), rnd(0, h), 2, 2); } });
+  const sandSide = tiled(sandTex, 60, 1, { roughness: 1 }), sandCap = tiled(sandTex, 24, 24, { roughness: 1 }), grassSide = tiled(grassTex, 40, 1, { roughness: 1 }), grassCap = tiled(grassTex, 14, 14, { roughness: 1 });
+  const R = ISL.r;
+  const beach = new T.Mesh(new T.CylinderGeometry(R, R + 7, 3.2, 72), [sandSide, sandCap, sandSide]); beach.position.set(ISL.x, -1.64, ISL.z); beach.receiveShadow = true; scene.add(beach);
+  const lawn = new T.Mesh(new T.CylinderGeometry(R - 9, R - 8, 0.12, 64), [grassSide, grassCap, grassSide]); lawn.position.set(ISL.x, -0.08, ISL.z); lawn.receiveShadow = true; scene.add(lawn);
+  const plazaTex = makeTex(512, 512, (g, w, h) => {
+    g.fillStyle = '#cdbfa5'; g.fillRect(0, 0, w, h); g.translate(w / 2, h / 2);
+    for (let r = 250; r > 20; r -= 38) { g.strokeStyle = r % 76 ? 'rgba(90,70,50,.35)' : 'rgba(150,110,60,.5)'; g.lineWidth = 6; g.beginPath(); g.arc(0, 0, r, 0, 7); g.stroke(); }
+    for (let k = 0; k < 16; k++) { g.save(); g.rotate(k / 16 * Math.PI * 2); g.fillStyle = k % 2 ? '#8a5a3a' : '#c9a24a'; g.fillRect(-6, -245, 12, 140); g.restore(); }
+    for (let i = 0; i < 4000; i++) { g.fillStyle = `rgba(0,0,0,${rnd(0.02, 0.07)})`; g.fillRect(rnd(-256, 256), rnd(-256, 256), 2, 2); }
+  }, { clamp: true });
+  const plaza = new T.Mesh(new T.CylinderGeometry(16, 16.3, 0.12, 48), [std(0xb5aca0, 0.9), new T.MeshStandardMaterial({ map: plazaTex, roughness: 0.85 }), std(0xb5aca0, 0.9)]);
+  plaza.position.set(ISL.x, -0.06, ISL.z); plaza.receiveShadow = true; scene.add(plaza);
+  /* fountain */
+  cyl(3.4, 3.6, 0.7, std(0xd8d2c4, 0.6), ISL.x, 0.35, ISL.z, null, 28, true); cyl(3.0, 3.0, 0.05, std(0x2aa7c9, 0.1, 0.1, { emissive: 0x0a4a66, emissiveIntensity: 0.6 }), ISL.x, 0.62, ISL.z, null, 28);
+  cyl(0.35, 0.5, 2.6, std(0xd8d2c4, 0.6), ISL.x, 1.5, ISL.z, null, 12, true); cyl(1.3, 0.4, 0.3, std(0xd8d2c4, 0.6), ISL.x, 2.7, ISL.z, null, 16); sph(0.4, glow(0xbfeaff), ISL.x, 3.1, ISL.z);
+  ob(ISL.x, ISL.z, 3.8); anchor(ISL.x, 4, ISL.z, 0xcfeaff, 1.3, 30);
+  /* a ring of invisible bumpers so nobody drives or walks into the sea (the bridge end is left open) */
+  for (let i = 0; i < 180; i++) {
+    const a = i / 180 * Math.PI * 2, x = ISL.x + Math.sin(a) * (R - 0.4), z = ISL.z - Math.cos(a) * (R - 0.4);
+    if (z < ISL.z - 20 && Math.abs(x - BX) < 9.5) continue;
+    ob(x, z, 1.5);
+  }
+  /* palms */
+  const palmMat = std(0x2f7a45, 0.9, 0, { side: T.DoubleSide }), trunkMat = std(0x8a6a4a, 0.95);
+  const inBld = [[246, 272, 404, 426], [300, 326, 404, 426]];
+  function palm(x, z, s, lean) {
+    const g = new T.Group(), tg = new T.Group(); tg.rotation.z = lean; g.add(tg);
+    cyl(0.16 * s, 0.26 * s, 6 * s, trunkMat, 0, 3 * s, 0, tg, 8);
+    for (let k = 0; k < 7; k++) { const pv = new T.Group(); pv.position.set(0, 6 * s, 0); pv.rotation.y = k / 7 * Math.PI * 2; tg.add(pv); box(2.6 * s, 0.05, 0.75 * s, palmMat, 1.3 * s, 0, 0, pv, false); }
+    g.position.set(x, 0, z); scene.add(g); ob(x, z, 0.45);
+  }
+  for (let i = 0; i < 22; i++) {
+    const a = i / 22 * Math.PI * 2 + 0.2, rr = R - 7 - (i % 3) * 4, x = ISL.x + Math.sin(a) * rr, z = ISL.z - Math.cos(a) * rr;
+    if (z < ISL.z - 30 && Math.abs(x - BX) < 16) continue;
+    if (inBld.some(b => x > b[0] - 3 && x < b[1] + 3 && z > b[2] - 3 && z < b[3] + 3)) continue;
+    palm(x, z, 0.9 + (i % 4) * 0.12, ((i % 5) - 2) * 0.05);
+  }
+  /* beach umbrellas and loungers */
+  [[-1, 0], [1, 0.4], [-0.8, -0.7], [0.9, -0.6]].forEach((q, i) => {
+    const x = ISL.x + q[0] * 47, z = ISL.z + q[1] * 30 - 4, c = [0xc9573f, 0xe2b13c, 0x3f7f8a, 0xd98aa3][i];
+    cyl(0.04, 0.04, 2.4, std(0xe9e4da, 0.5), x, 1.2, z, null, 6); const um = new T.Mesh(new T.ConeGeometry(1.7, 0.6, 10), std(c, 0.8)); um.position.set(x, 2.5, z); scene.add(um);
+    box(0.7, 0.12, 1.8, std(0xf4f1ea, 0.8), x + 1.4, 0.2, z, null, false); box(0.7, 0.4, 0.1, std(0xf4f1ea, 0.8), x + 1.4, 0.45, z - 0.8, null, false);
+    ob(x, z, 0.5);
+  });
+  /* lighthouse at the back of the island */
+  (function () {
+    const lx = ISL.x, lz = ISL.z + 45, red = std(0xc9382f, 0.7), wht = std(0xf4f1ea, 0.7);
+    for (let k = 0; k < 5; k++) cyl(2.6 - k * 0.2, 2.8 - k * 0.2 + 0.0, 4.4, k % 2 ? wht : red, lx, 2.2 + k * 4.4, lz, null, 24, true);
+    cyl(3.2, 3.2, 0.3, std(0x2a3138, 0.5), lx, 22.2, lz, null, 24); cyl(1.5, 1.5, 2.4, glow(0xffe9a8), lx, 23.5, lz, null, 16);
+    const roof = new T.Mesh(new T.ConeGeometry(2.0, 1.8, 16), red); roof.position.set(lx, 25.6, lz); scene.add(roof);
+    ob(lx, lz, 3.6); anchor(lx, 23.5, lz, 0xffe0a0, 1.6, 55);
+  })();
+  /* lamps round the plaza and a sign by the landing */
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * Math.PI * 2 + 0.4, x = ISL.x + Math.sin(a) * 19, z = ISL.z - Math.cos(a) * 19;
+    cyl(0.07, 0.09, 5, std(0x25282b, 0.5, 0.6), x, 2.5, z, null, 8); sph(0.28, glow(0xffe2a8), x, 5.2, z); ob(x, z, 0.3);
+  }
+  plane(7, 1.1, new T.MeshBasicMaterial({ map: labelTex('SEA ISLAND', 512, 80, '700 52px "Bricolage Grotesque", Georgia, serif', '#f6e3ae', '#1f3a40') }), BX + 11, 2.4, ISL.z - R + 12, 0, Math.PI);
+  box(0.2, 2.4, 0.2, std(0x25282b, 0.5), BX + 11, 1.2, ISL.z - R + 12.1, null, false);
+})();
+
 /* ---------- walls with real door and window openings ---------- */
 /* ops are [from, to, 'd' | 'w', doorHeight?] in world coordinates along the wall */
 function wallW(B, axis, fixed, a, b, ops, y0, y1, o) {
@@ -1096,7 +1301,11 @@ function wallW(B, axis, fixed, a, b, ops, y0, y1, o) {
   const put = (from, to, ya, yb) => {
     const len = to - from, h = yb - ya; if (len < 0.01 || h < 0.01) return;
     const m = (from + to) / 2, ym = (ya + yb) / 2;
-    if (axis === 'x') B.box('solid', len, h, th, m, ym, fixed, col); else B.box('solid', th, h, len, fixed, ym, m, col);
+    if (o.cl) {                                   /* inner wall: each face wears the colour of the room it faces */
+      const c1 = o.cl(m, -1), c2 = o.cl(m, 1), t2 = th / 2;
+      if (axis === 'x') { B.box('solid', len, h, t2, m, ym, fixed - th / 4, c1); B.box('solid', len, h, t2, m, ym, fixed + th / 4, c2); }
+      else { B.box('solid', t2, h, len, fixed - th / 4, ym, m, c1); B.box('solid', t2, h, len, fixed + th / 4, ym, m, c2); }
+    } else if (axis === 'x') B.box('solid', len, h, th, m, ym, fixed, col); else B.box('solid', th, h, len, fixed, ym, m, col);
   };
   const blk = (from, to) => { if (to - from < 0.01) return; if (axis === 'x') rectC(from, fixed - th / 2, to, fixed + th / 2, lv); else rectC(fixed - th / 2, from, fixed + th / 2, to, lv); };
   const trimBox = (w, h, x, y, ext) => { if (axis === 'x') B.box('solid', w, h, th + (ext || 0.06), x, y, fixed, tc); else B.box('solid', th + (ext || 0.06), h, w, fixed, y, x, tc); };
@@ -1130,36 +1339,40 @@ const PASTEL = [0xc9573f, 0x3f7f8a, 0xe2b13c, 0x8a3b3b, 0x3f7a54, 0x6b5ca5, 0xd9
 const CEIL = 0xefe8dc;
 
 /* stairs: solid steps with a hand rail. zA is the bottom end, zB the top end (they differ in sign when the stair climbs north) */
-function buildStairs(B, x1, x2, zA, zB, hole, both) {
+function buildStairs(B, x1, x2, zA, zB, hole, both, g) {
+  g = g || 0; const y0 = g * FH;
   const n = 16, rise = FH / n, dz = (zB - zA) / n, ad = Math.abs(dz), sg = Math.sign(zB - zA), cx = (x1 + x2) / 2;
   for (let i = 0; i < n; i++) {
     const top = rise * (i + 1), zc = zA + dz * (i + 0.5);
-    B.box('solid', x2 - x1, top, ad, cx, top / 2, zc, 0xcfc4b0);
-    B.box('wood', x2 - x1 + 0.04, 0.05, ad + 0.04, cx, top, zc, 0xb08a5a);
-    B.box('solid', 0.05, 0.05, ad + 0.02, x2 + 0.03, top + 0.9, zc, 0x3b2a20);
-    if (both) B.box('solid', 0.05, 0.05, ad + 0.02, x1 - 0.03, top + 0.9, zc, 0x3b2a20);
-    if (i % 2 === 0) { B.box('solid', 0.05, 0.9, 0.05, x2 + 0.03, top + 0.45, zc, 0x3b2a20); if (both) B.box('solid', 0.05, 0.9, 0.05, x1 - 0.03, top + 0.45, zc, 0x3b2a20); }
+    B.box('solid', x2 - x1, top, ad, cx, y0 + top / 2, zc, 0xcfc4b0);
+    B.box('wood', x2 - x1 + 0.04, 0.05, ad + 0.04, cx, y0 + top, zc, 0xb08a5a);
+    B.box('solid', 0.05, 0.05, ad + 0.02, x2 + 0.03, y0 + top + 0.9, zc, 0x3b2a20);
+    if (both) B.box('solid', 0.05, 0.05, ad + 0.02, x1 - 0.03, y0 + top + 0.9, zc, 0x3b2a20);
+    if (i % 2 === 0) { B.box('solid', 0.05, 0.9, 0.05, x2 + 0.03, y0 + top + 0.45, zc, 0x3b2a20); if (both) B.box('solid', 0.05, 0.9, 0.05, x1 - 0.03, y0 + top + 0.45, zc, 0x3b2a20); }
   }
   const zl = Math.min(zA, zB), zh = Math.max(zA, zB);
-  rectC(x2, zl - 0.05, x2 + 0.1, zh + 0.05, -1); rectC(x1 - 0.1, zl - 0.05, x1, zh + 0.05, -1);
-  rectC(x1, zB, x2 + 0.1, zB + sg * 0.14, 0);                          /* stops someone on the ground floor walking in from the top end */
-  if (hole) {                                                          /* upstairs: rail round the hole in the floor */
-    rectC(x1, zA - sg * 0.14, x2 + 0.1, zA, 1);
-    B.box('glass', x2 - x1, 0.9, 0.04, cx, FH + 0.5, zA - sg * 0.05, 0xcfe3ee); B.box('solid', x2 - x1 + 0.1, 0.05, 0.06, cx, FH + 0.97, zA - sg * 0.05, 0x3b2a20);
-    B.box('glass', 0.04, 0.9, ad, x2 + 0.03, FH + 0.5, (zA + zB) / 2, 0xcfe3ee); B.box('solid', 0.06, 0.05, ad, x2 + 0.03, FH + 0.97, (zA + zB) / 2, 0x3b2a20);
+  /* side rails block this floor and the floor above (a stair crosses both) */
+  [g, g + 1].forEach(lv => { rectC(x2, zl - 0.05, x2 + 0.1, zh + 0.05, lv); rectC(x1 - 0.1, zl - 0.05, x1, zh + 0.05, lv); });
+  rectC(x1, zB, x2 + 0.1, zB + sg * 0.14, g);                          /* stops someone on this floor walking in from the top end */
+  if (hole) {                                                          /* the floor above: rail round the hole */
+    const hy = (g + 1) * FH;
+    rectC(x1, zA - sg * 0.14, x2 + 0.1, zA, g + 1);
+    B.box('glass', x2 - x1, 0.9, 0.04, cx, hy + 0.5, zA - sg * 0.05, 0xcfe3ee); B.box('solid', x2 - x1 + 0.1, 0.05, 0.06, cx, hy + 0.97, zA - sg * 0.05, 0x3b2a20);
+    B.box('glass', 0.04, 0.9, ad, x2 + 0.03, hy + 0.5, (zA + zB) / 2, 0xcfe3ee); B.box('solid', 0.06, 0.05, ad, x2 + 0.03, hy + 0.97, (zA + zB) / 2, 0x3b2a20);
+    if (both) { B.box('glass', 0.04, 0.9, ad, x1 - 0.03, hy + 0.5, (zA + zB) / 2, 0xcfe3ee); B.box('solid', 0.06, 0.05, ad, x1 - 0.03, hy + 0.97, (zA + zB) / 2, 0x3b2a20); }
   }
-  stairs.push({ x1, x2, zA, zB });
+  stairs.push({ x1, x2, zA, zB, y0 });
 }
 /* height of the floor under a walker: on a stair it follows the ramp, otherwise it is the floor they are on */
 function groundY(o) {
   for (let i = 0; i < stairs.length; i++) {
     const s = stairs[i];
     if (o.x > s.x1 && o.x < s.x2 && o.z > Math.min(s.zA, s.zB) && o.z < Math.max(s.zA, s.zB)) {
-      const y = FH * clamp((o.z - s.zA) / (s.zB - s.zA));
+      const y = s.y0 + FH * clamp((o.z - s.zA) / (s.zB - s.zA));
       if (Math.abs(o.y - y) < 1.2) return y;
     }
   }
-  return o.y > FH * 0.5 ? FH : 0;
+  return Math.max(0, Math.round(o.y / FH)) * FH;
 }
 
 const seatsAt = (x, z, hd, y, fy) => seats.push({ x: x + Math.sin(hd) * 0.05, z: z + Math.cos(hd) * 0.05, hd, y: y + fy, fy });
@@ -1258,14 +1471,62 @@ const NAMES = { living: 'Living room', lounge: 'Lounge', kitchen: 'Kitchen', din
 const LAYOUT = {
   home: { g: ['living', 'kitchen', 'dining', 'study', 'lounge', 'kitchen'], u: ['bedroom', 'bathroom', 'bedroom', 'bedroom', 'study', 'bedroom'] },
   office: { g: ['office', 'meeting', 'office', 'kitchen', 'office', 'meeting'], u: ['office', 'meeting', 'office', 'office', 'meeting', 'office'] },
-  shop: { g: ['shop', 'shop', 'shop', 'kitchen', 'shop', 'shop'], u: ['living', 'bedroom', 'bathroom', 'kitchen', 'bedroom', 'bedroom'] }
+  shop: { g: ['shop', 'shop', 'shop', 'kitchen', 'shop', 'shop'], u: ['living', 'bedroom', 'bathroom', 'kitchen', 'bedroom', 'bedroom'] },
+  hotel: { g: ['living', 'living', 'living', 'living', 'living', 'living'], u: ['bedroom', 'living', 'bedroom', 'bathroom', 'bedroom', 'study'] }
 };
 const FLOORK = { living: 'wood', lounge: 'wood', dining: 'wood', bedroom: 'wood', study: 'carpet', office: 'carpet', meeting: 'carpet', shop: 'tile', kitchen: 'tile', bathroom: 'tile' };
 const FLOORC = { wood: 0xffffff, carpet: 0xb8c4d0, tile: 0xffffff };
 
-/* ---------- a whole two-storey building ---------- */
-function makeBuilding(s, idx) {
-  const B = new Batch(), W = s.x2 - s.x1, D = s.z2 - s.z1, pal = PAL[idx % PAL.length], WC = pal.wall, TC = pal.trim;
+/* ---------- every room gets its own floor pattern, colour and wall paint ---------- */
+const hsh = a => { a = (a ^ 61) ^ (a >>> 16); a = (a + (a << 3)) | 0; a ^= a >>> 4; a = Math.imul(a, 0x27d4eb2d); a ^= a >>> 15; return a >>> 0; };
+const FP = {
+  wood: [['herring', 0xffffff], ['herring', 0xe3bd8c], ['herring', 0xa9855b], ['parquet', 0xffffff], ['parquet', 0xd3a574], ['wood', 0xffffff], ['wood', 0xb89272], ['wood', 0x8f6a4a]],
+  soft: [['stripe', 0xcdb7d6], ['stripe', 0xb9d3c4], ['stripe', 0xe0c3a0], ['diamond', 0xd7a9a0], ['diamond', 0xa9c1dd], ['diamond', 0xc9d6a8], ['carpet', 0xb8c4d0], ['carpet', 0xd9c0b0]],
+  tile: [['check', 0xffffff], ['check', 0xd9825b], ['check', 0xa9c9d6], ['terrazzo', 0xffffff], ['terrazzo', 0xe8d3b8], ['slate', 0xb9c0c8], ['slate', 0xc9a98b], ['hex', 0xe6e0d0]],
+  bath: [['hex', 0xbfe3ee], ['hex', 0xffffff], ['mosaic', 0x9fd3e6], ['mosaic', 0xe3d9a8], ['check', 0x9fc3d8], ['terrazzo', 0xbcd8cc]],
+  office: [['carpet', 0x9fb0c0], ['stripe', 0x9fb0c0], ['diamond', 0x8fa6b8], ['carpet', 0xb0b8a8], ['terrazzo', 0xdcdcdc], ['check', 0xc8ccd2]]
+};
+const WALLC = {
+  gen: [0xe8d9c0, 0xd9a38b, 0xa9b8c4, 0xb7c2a1, 0xe4c98f, 0xcdb6c9, 0x9fb3a8, 0xf0e2cf, 0xc7d8e6, 0xe9c1b8, 0xb9cfa6, 0xd6c2a0],
+  bath: [0xbfe0e6, 0xcfe8dc, 0xe6e0f0, 0xf2e4d0], kitchen: [0xf0dfa0, 0xcfe6c8, 0xf2c6a8, 0xe8e4d0],
+  deep: [0x6f8a9a, 0x7a6a8a, 0x8a9a78, 0x9a7a6a], office: [0xd8dde2, 0xc3d2e0, 0xdcd8c8, 0xcfd9d0]
+};
+const ACCENT = [0xc9573f, 0x3f7f8a, 0xe2b13c, 0x8a3b3b, 0x3f7a54, 0x6b5ca5, 0xd98aa3, 0x2a6f97];
+function roomType(tw, f, wi, r, c) {
+  let k = 0; for (let q = 0; q < wi; q++) k += tw.wings[q].nc * tw.rows;
+  k += r * tw.wings[wi].nc + c;
+  return f === 0 ? tw.lay.g[k % 6] : tw.lay.u[(k + (f > 1 ? f : 0)) % 6];
+}
+function styleAt(tw, f, wi, r, c) {
+  const key = f + ':' + wi + ':' + r + ':' + c;
+  if (tw.RS[key]) return tw.RS[key];
+  const type = roomType(tw, f, wi, r, c), h = hsh(tw.idx * 7919 + f * 613 + wi * 97 + r * 31 + c * 7 + 5), pk = (arr, k) => arr[hsh(h + k * 101) % arr.length];
+  let pool = FP.wood;
+  switch (type) {
+    case 'bedroom': case 'study': pool = (h & 1) ? FP.soft : FP.wood; break;
+    case 'living': case 'lounge': pool = (h & 3) ? FP.wood : FP.soft; break;
+    case 'kitchen': case 'shop': pool = FP.tile; break;
+    case 'bathroom': pool = FP.bath; break;
+    case 'office': case 'meeting': pool = FP.office; break;
+  }
+  const fl = pk(pool, 1), wp = type === 'bathroom' ? WALLC.bath : type === 'kitchen' ? WALLC.kitchen : type === 'study' ? WALLC.deep : (type === 'office' || type === 'meeting') ? WALLC.office : WALLC.gen;
+  return (tw.RS[key] = { type, fk: fl[0], fc: fl[1], wc: pk(wp, 2), ac: pk(ACCENT, 3) });
+}
+function zWallCol(tw, f, wi, u, r, sd) {
+  const w = tw.wings[wi]; let c = -1;
+  for (let i = 0; i <= w.nc; i++) if (Math.abs(w.cb[i] - u) < 1e-6) c = i;
+  const ci = sd < 0 ? c - 1 : c;
+  if (c < 0 || ci < 0 || ci >= w.nc) return tw.WC;       /* that face looks into the hall */
+  return styleAt(tw, f, wi, r, ci).wc;
+}
+function xWallCol(tw, f, wi, r, c, sd) {
+  const row = (sd < 0) === (tw.dir > 0) ? r - 1 : r;
+  return styleAt(tw, f, wi, row, c).wc;
+}
+
+/* everything about where the rooms, hall and stairs of a building sit */
+function layoutRecord(s, idx) {
+  const W = s.x2 - s.x1, D = s.z2 - s.z1, pal = PAL[idx % PAL.length], WC = pal.wall, TC = pal.trim;
   const south = s.f === 's', zf = south ? s.z2 : s.z1, dir = south ? -1 : 1;
   const Zv = v => zf + dir * v, Xu = u => s.x1 + u;
   const HW = 4.4, hu = W >= 20 ? Math.round((W - HW) / 2 * 2) / 2 : 0, hc = hu + HW / 2;
@@ -1279,17 +1540,97 @@ function makeBuilding(s, idx) {
   const partU = [hu, hu + HW]; wings.forEach(w => w.cb.forEach(u => partU.push(u)));
   const zlo = Math.min(Zv(0), Zv(D)), zhi = Math.max(Zv(0), Zv(D));
   const vS = mids[0] + 0.75 + 1.2, vT = vS + 16 * 0.28;          /* stair run in the hall, between the first two doors */
-  const su0 = hu + 0.15, su1 = hu + 1.75;
+  const su0 = hu + 0.15, su1 = hu + 1.55, lb0 = hu + HW - 1.55, lb1 = hu + HW - 0.15;   /* two stair lanes side by side */
+  return { s, idx, n: s.n, W, D, pal, WC, TC, south, zf, dir, Zv, Xu, HW, hu, hc, rows, vb, wings, iv, mids, partU, zlo, zhi, vS, vT, su0, su1, lb0, lb1,
+    top: 1, minFlight: 0, lay: LAYOUT[s.st], RS: {}, floors: {}, x1: s.x1, x2: s.x2, z1: s.z1, z2: s.z2 };
+}
+function interiorWalls(B, tw, f) {
+  const { Xu, Zv, vb, rows, mids, iv, hu, HW, WC, TC } = tw, y0 = f * FH;
+  tw.wings.forEach((w, wi) => {
+    const us = [w.side < 0 ? hu : hu + HW]; for (let c = 1; c < w.nc; c++) us.push(w.cb[c]);
+    us.forEach(u => {
+      for (let r = 0; r < rows; r++) {
+        const q = iv(mids[r], 0.75), a = Math.min(Zv(vb[r]), Zv(vb[r + 1])), b = Math.max(Zv(vb[r]), Zv(vb[r + 1]));
+        wallW(B, 'z', Xu(u), a, b, [[q[0], q[1], 'd']], y0, y0 + FH - SLAB, { col: WC, lv: f, th: 0.2, trim: TC, cl: (m, sd) => zWallCol(tw, f, wi, u, r, sd) });
+      }
+    });
+    for (let r = 1; r < rows; r++) for (let c = 0; c < w.nc; c++)
+      wallW(B, 'x', Zv(vb[r]), Xu(w.cb[c]), Xu(w.cb[c + 1]), [], y0, y0 + FH - SLAB, { col: WC, lv: f, th: 0.2, trim: TC, cl: (m, sd) => xWallCol(tw, f, wi, r, c, sd) });
+  });
+}
+function addRooms(B, tw, f) {
+  tw.wings.forEach((w, wi) => { for (let r = 0; r < tw.rows; r++) for (let c = 0; c < w.nc; c++) {
+    const st = styleAt(tw, f, wi, r, c), a = tw.Zv(tw.vb[r]), b = tw.Zv(tw.vb[r + 1]), x1 = tw.Xu(w.cb[c]), x2 = tw.Xu(w.cb[c + 1]);
+    const R = { type: st.type, f, x1: Math.min(x1, x2), x2: Math.max(x1, x2), z1: Math.min(a, b), z2: Math.max(a, b) };
+    const cx = (R.x1 + R.x2) / 2, cz = (R.z1 + R.z2) / 2, fz = f * FH;
+    B.box(st.fk, R.x2 - R.x1 - 0.1, 0.04, R.z2 - R.z1 - 0.1, cx, fz - 0.01, cz, st.fc);
+    /* a coloured border inlay makes every floor read differently */
+    const bx = R.x2 - R.x1 - 1.2, bz = R.z2 - R.z1 - 1.2;
+    B.box('solid', bx, 0.03, 0.1, cx, fz + 0.012, R.z1 + 0.6, st.ac); B.box('solid', bx, 0.03, 0.1, cx, fz + 0.012, R.z2 - 0.6, st.ac);
+    B.box('solid', 0.1, 0.03, bz, R.x1 + 0.6, fz + 0.012, cz, st.ac); B.box('solid', 0.1, 0.03, bz, R.x2 - 0.6, fz + 0.012, cz, st.ac);
+    furnish(B, R);
+    roomInfo.push({ name: NAMES[st.type], bname: tw.n, x1: R.x1, x2: R.x2, z1: R.z1, z2: R.z2, lv: f });
+  } });
+}
+function hallFloor(B, tw, f) {
+  const { Xu, Zv, hu, HW, D, vS, vT, su1, lb0 } = tw, y = f * FH - 0.01;
+  const rect = (ua, ub, va, vb2) => { const za = Zv(va), zb = Zv(vb2); B.box('tile', Xu(ub) - Xu(ua), 0.04, Math.abs(zb - za), (Xu(ua) + Xu(ub)) / 2, y, (za + zb) / 2, 0xcfc8bc); };
+  const hf = f - 1, hole = f >= 1 && hf >= tw.minFlight && hf < tw.top;
+  if (!hole) { rect(hu, hu + HW, 0, D); return; }
+  rect(hu, hu + HW, 0, vS); rect(hu, hu + HW, vT, D);
+  if (hf % 2 === 0) rect(su1, hu + HW, vS, vT); else rect(hu, lb0, vS, vT);
+}
+function hallDeco(B, tw, f) {
+  const { Xu, Zv, hu, HW, hc, D } = tw, fz = f * FH, px = Xu(hu + HW - 0.5), pz = Zv(D - 0.7);
+  B.box('solid', 0.4, 0.45, 0.4, px, fz + 0.22, pz, 0x8a4b32); B.box('solid', 0.55, 0.8, 0.55, px, fz + 0.85, pz, 0x3f7a54); rectC(px - 0.2, pz - 0.2, px + 0.2, pz + 0.2, f);
+  for (let v = 3; v < D; v += 6) B.box('glow', 0.7, 0.04, 0.7, Xu(hc), fz + FH - SLAB - 0.03, Zv(v), 0xfff0d0);
+  B.box('solid', 1.0, 0.75, 0.04, Xu(hu + HW - 0.12), fz + 1.9, Zv(D * 0.5), 0xc9a24a);
+  anchor(Xu(hc), fz + 2.5, Zv(D * 0.38), 0xffe6bd, 1.1, 13);
+}
+function elevDoor(B, tw, f) {
+  const { Xu, Zv, hc, D } = tw, fz = f * FH, x = Xu(hc), zi = Zv(D - 0.34);
+  B.box('solid', 2.4, 2.6, 0.06, x, fz + 1.3, Zv(D - 0.28), 0x2a2d31);
+  B.box('solid', 0.85, 2.3, 0.05, x - 0.45, fz + 1.15, zi, 0xbfc1c6); B.box('solid', 0.85, 2.3, 0.05, x + 0.45, fz + 1.15, zi, 0xbfc1c6);
+  B.box('glow', 1.2, 0.1, 0.04, x, fz + 2.75, zi, 0xff9d4a);
+}
+/* ceiling slab at floor level L, with a hole where the stair from the floor below comes through */
+function slabAbove(B, tw, L) {
+  const { Xu, Zv, W, D, vS, vT, su0, su1, lb0, lb1 } = tw, y = L * FH - 0.03 - (SLAB - 0.03) / 2, h = SLAB - 0.03;
+  const rect = (ua, ub, va, vb2) => { if (ub - ua < 0.01 || Math.abs(vb2 - va) < 0.01) return; const za = Zv(va), zb = Zv(vb2); B.box('solid', Xu(ub) - Xu(ua), h, Math.abs(zb - za), (Xu(ua) + Xu(ub)) / 2, y, (za + zb) / 2, CEIL); };
+  const hf = L - 1, hole = hf >= tw.minFlight && hf < tw.top;
+  if (!hole) { rect(-0.2, W + 0.2, -0.2, D + 0.2); return; }
+  rect(0, W, 0, vS); rect(0, W, vT, D);
+  if (hf % 2 === 0) { rect(0, su0, vS, vT); rect(su1, W, vS, vT); } else { rect(0, lb0, vS, vT); rect(lb1, W, vS, vT); }
+}
+/* the stair from floor g to g + 1: even floors use the left lane, odd floors the right lane, so they stack in a switchback */
+function flight(B, tw, g) {
+  const laneA = g % 2 === 0, x1 = tw.Xu(laneA ? tw.su0 : tw.lb0), x2 = tw.Xu(laneA ? tw.su1 : tw.lb1), zS = tw.Zv(tw.vS), zT = tw.Zv(tw.vT);
+  if (laneA) buildStairs(B, x1, x2, zS, zT, true, true, g); else buildStairs(B, x1, x2, zT, zS, true, true, g);
+}
+/* floors above the second one are built the first time someone gets close, then shown only while you are inside that tower */
+function buildPlate(tw, f) {
+  if (f < 2 || f > tw.top || tw.floors[f]) return;
+  const B = new Batch(), { Xu, Zv, W, D, zlo, zhi } = tw;
+  interiorWalls(B, tw, f);
+  [0, D].forEach(v => rectC(Xu(-0.2), Zv(v) - 0.2, Xu(W + 0.2), Zv(v) + 0.2, f));
+  [0, W].forEach(u => rectC(Xu(u) - 0.2, zlo, Xu(u) + 0.2, zhi, f));
+  addRooms(B, tw, f); hallFloor(B, tw, f); hallDeco(B, tw, f); elevDoor(B, tw, f);
+  roomInfo.push({ name: 'Hall', bname: tw.n, x1: Xu(tw.hu), x2: Xu(tw.hu + tw.HW), z1: zlo, z2: zhi, lv: f });
+  if (f < tw.top) flight(B, tw, f);
+  slabAbove(B, tw, f + 1);
+  const g = B.build(); g.visible = false; tw.floors[f] = g;
+}
+
+/* ---------- a whole two-storey building ---------- */
+function makeBuilding(s, idx) {
+  const B = new Batch(), tw = layoutRecord(s, idx);
+  const { W, D, pal, WC, TC, south, zf, dir, Zv, Xu, HW, hu, hc, rows, vb, wings, iv, mids, partU, zlo, zhi, vS, vT, su0, su1 } = tw;
+  if (s.tower) tw.top = Math.round((s.tower - 2 * FH) / FH) + 1;
 
   /* ---- walls, floor by floor ---- */
   for (let f = 0; f < 2; f++) {
     const y0 = f * FH;
-    /* interior */
-    wings.forEach(w => {
-      const walls = [w.side < 0 ? hu : hu + HW]; for (let c = 1; c < w.nc; c++) walls.push(w.cb[c]);
-      walls.forEach(u => wallW(B, 'z', Xu(u), zlo, zhi, mids.map(m => { const q = iv(m, 0.75); return [q[0], q[1], 'd']; }), y0, y0 + FH - SLAB, { col: WC, lv: f, th: 0.2, trim: TC }));
-      for (let r = 1; r < rows; r++) wallW(B, 'x', Zv(vb[r]), Xu(w.u0), Xu(w.u1), [], y0, y0 + FH - SLAB, { col: WC, lv: f, th: 0.2, trim: TC });
-    });
+    interiorWalls(B, tw, f);
     /* exterior */
     const ok = { col: WC, lv: f, th: 0.4, trim: TC };
     [0, D].forEach(v => {
@@ -1313,10 +1654,9 @@ function makeBuilding(s, idx) {
   const slabY = FH - 0.03 - (SLAB - 0.03) / 2;
   rect('solid', 0, W, 0, vS, slabY, SLAB - 0.03, CEIL); rect('solid', 0, W, vT, D, slabY, SLAB - 0.03, CEIL);
   rect('solid', 0, su0, vS, vT, slabY, SLAB - 0.03, CEIL); rect('solid', su1, W, vS, vT, slabY, SLAB - 0.03, CEIL);
-  rect('solid', -0.2, W + 0.2, -0.2, D + 0.2, 2 * FH - SLAB / 2 - 0.05, SLAB - 0.1, CEIL);
-  rect('solid', -0.35, W + 0.35, -0.35, D + 0.35, 2 * FH + 0.02, 0.14, pal.roof);
-  rect('tile', hu, hu + HW, 0, D, -0.01, 0.04, 0xcfc8bc);
-  rect('tile', hu, hu + HW, 0, vS, FH - 0.01, 0.04, 0xcfc8bc); rect('tile', hu, hu + HW, vT, D, FH - 0.01, 0.04, 0xcfc8bc); rect('tile', su1, hu + HW, vS, vT, FH - 0.01, 0.04, 0xcfc8bc);
+  if (s.tower) slabAbove(B, tw, 2);
+  else { rect('solid', -0.2, W + 0.2, -0.2, D + 0.2, 2 * FH - SLAB / 2 - 0.05, SLAB - 0.1, CEIL); rect('solid', -0.35, W + 0.35, -0.35, D + 0.35, 2 * FH + 0.02, 0.14, pal.roof); }
+  hallFloor(B, tw, 0); hallFloor(B, tw, 1);
   rect('carpet', hc - 0.7, hc + 0.7, 0.3, D - 0.3, 0.012, 0.01, 0x8a3b3b);
   rect('solid', -0.2, W + 0.2, -0.2, 0.0, 0.1, 0.2, TC);                                   /* plinth hints */
   if (!s.tower) {
@@ -1326,44 +1666,25 @@ function makeBuilding(s, idx) {
     rect('solid', 2, 4.2, D * 0.4, D * 0.4 + 2, 2 * FH + 0.6, 1.0, 0x9aa0a6); rect('solid', W - 5, W - 2.5, D * 0.6, D * 0.6 + 1.6, 2 * FH + 0.5, 0.8, 0x8a9096);
   }
   rect('solid', -0.2, W + 0.2, -0.2, 0.0, FH, 0.12, TC); rect('solid', -0.2, W + 0.2, D, D + 0.2, FH, 0.12, TC);
-  /* ---- rooms ---- */
-  const lay = LAYOUT[s.st]; let gi = 0, ui = 0;
-  const addRoom = (type, x1, z1, x2, z2, f) => {
-    const R = { type, f, x1: Math.min(x1, x2), x2: Math.max(x1, x2), z1: Math.min(z1, z2), z2: Math.max(z1, z2) };
-    const fk = FLOORK[type];
-    B.box(fk, R.x2 - R.x1 - 0.1, 0.04, R.z2 - R.z1 - 0.1, (R.x1 + R.x2) / 2, f * FH - 0.01, (R.z1 + R.z2) / 2, FLOORC[fk]);
-    furnish(B, R);
-    roomInfo.push({ name: NAMES[type], bname: s.n, x1: R.x1, x2: R.x2, z1: R.z1, z2: R.z2, lv: f });
-  };
-  wings.forEach(w => { for (let r = 0; r < rows; r++) for (let c = 0; c < w.nc; c++) {
-    for (let f = 0; f < 2; f++) {
-      const type = f === 0 ? lay.g[gi % 6] : lay.u[ui % 6]; if (f === 0) gi++; else ui++;
-      const a = Zv(vb[r]), b = Zv(vb[r + 1]);
-      addRoom(type, Xu(w.cb[c]), a, Xu(w.cb[c + 1]), b, f);
-    }
-  } });
+  addRooms(B, tw, 0); addRooms(B, tw, 1);
   /* ---- hall: stairs, plants, lights ---- */
   const hx1 = Xu(hu), hx2 = Xu(hu + HW), hz1 = zlo, hz2 = zhi;
   roomInfo.push({ name: 'Hall', bname: s.n, x1: hx1, x2: hx2, z1: hz1, z2: hz2, lv: 0 });
   roomInfo.push({ name: 'Landing', bname: s.n, x1: hx1, x2: hx2, z1: hz1, z2: hz2, lv: 1 });
   buildStairs(B, Xu(su0), Xu(su1), Zv(vS), Zv(vT), true, false);
-  for (let f = 0; f < 2; f++) {
-    const fz = f * FH, px = Xu(hu + HW - 0.5), pz = Zv(D - 0.7);
-    B.box('solid', 0.4, 0.45, 0.4, px, fz + 0.22, pz, 0x8a4b32); B.box('solid', 0.55, 0.8, 0.55, px, fz + 0.85, pz, 0x3f7a54); rectC(px - 0.2, pz - 0.2, px + 0.2, pz + 0.2, f);
-    for (let v = 3; v < D; v += 6) B.box('glow', 0.7, 0.04, 0.7, Xu(hc), fz + FH - SLAB - 0.03, Zv(v), 0xfff0d0);
-    B.box('solid', 1.0, 0.75, 0.04, Xu(hu + HW - 0.12), fz + 1.9, Zv(D * 0.5), 0xc9a24a);
-    anchor(Xu(hc), fz + 2.5, Zv(D * 0.38), 0xffe6bd, 1.1, 13);
-  }
+  if (s.tower) { flight(B, tw, 1); elevDoor(B, tw, 0); elevDoor(B, tw, 1); }
+  hallDeco(B, tw, 0); hallDeco(B, tw, 1);
   /* ---- tower on top, or a flat roof ---- */
   if (s.tower) {
-    const th = s.tower - 2 * FH, nf = Math.round(th / 3.4);
+    const nf = tw.top - 1, th = nf * FH, topY = 2 * FH + th;
     const mx = facadeMat(D, th, Math.max(3, Math.round(D / 3.6)), nf, 0.4, 12), mz = facadeMat(W, th, Math.max(3, Math.round(W / 3.6)), nf, 0.4, 12), mt = std(0x7a7164, 0.9);
+    [mx, mz, mt].forEach(m => { m.side = T.DoubleSide; });          /* the inside of the walls is visible from the tower floors */
     const t = new T.Mesh(new T.BoxGeometry(W, th, D), [mx, mx, mt, mt, mz, mz]);
     t.position.set(Xu(W / 2), 2 * FH + th / 2, (s.z1 + s.z2) / 2); scene.add(t);
-    const cap = new T.Mesh(new T.BoxGeometry(W + 0.6, 0.8, D + 0.6), std(0x7a7164, 0.9)); cap.position.set(Xu(W / 2), s.tower + 0.4, (s.z1 + s.z2) / 2); scene.add(cap);
-    const mech = new T.Mesh(new T.BoxGeometry(W * 0.4, 3, D * 0.3), std(0x8b8479, 0.8)); mech.position.set(Xu(W * 0.4), s.tower + 2.3, (s.z1 + s.z2) / 2); scene.add(mech);
-    const ant = new T.Mesh(new T.BoxGeometry(0.3, 10, 0.3), std(0x55595e, 0.5, 0.5)); ant.position.set(Xu(W * 0.7), s.tower + 5.8, (s.z1 + s.z2) / 2); scene.add(ant);
-    const bea = new T.Mesh(new T.BoxGeometry(0.5, 0.5, 0.5), glow(0xff4a3a)); bea.position.set(Xu(W * 0.7), s.tower + 11, (s.z1 + s.z2) / 2); scene.add(bea);
+    const cap = new T.Mesh(new T.BoxGeometry(W + 0.6, 0.8, D + 0.6), std(0x7a7164, 0.9)); cap.position.set(Xu(W / 2), topY + 0.4, (s.z1 + s.z2) / 2); scene.add(cap);
+    const mech = new T.Mesh(new T.BoxGeometry(W * 0.4, 3, D * 0.3), std(0x8b8479, 0.8)); mech.position.set(Xu(W * 0.4), topY + 2.3, (s.z1 + s.z2) / 2); scene.add(mech);
+    const ant = new T.Mesh(new T.BoxGeometry(0.3, 10, 0.3), std(0x55595e, 0.5, 0.5)); ant.position.set(Xu(W * 0.7), topY + 5.8, (s.z1 + s.z2) / 2); scene.add(ant);
+    const bea = new T.Mesh(new T.BoxGeometry(0.5, 0.5, 0.5), glow(0xff4a3a)); bea.position.set(Xu(W * 0.7), topY + 11, (s.z1 + s.z2) / 2); scene.add(bea);
   }
   /* ---- door sign and canopy ---- */
   const out = -dir;
@@ -1372,6 +1693,11 @@ function makeBuilding(s, idx) {
   B.build();
   bRects.push({ x1: s.x1 - 0.2, x2: s.x2 + 0.2, z1: s.z1 - 0.2, z2: s.z2 + 0.2 });
   bInfo.push({ name: s.n, x1: s.x1, x2: s.x2, z1: s.z1, z2: s.z2, hx: Xu(hu + 3.3), hz: Zv(D * 0.55), hz2: Zv(D * 0.8) });
+  if (s.tower) {                       /* tall buildings: upper floors are built on demand, and an elevator serves every floor */
+    towers.push(tw);
+    const fl = []; for (let f = 0; f <= tw.top; f++) fl.push({ f, label: f ? String(f) : 'G', x: Xu(hc), z: Zv(D - 1.3), ph: dir > 0 ? Math.PI : 0 });
+    elevators.push({ name: s.n, tw, floors: fl });
+  }
 }
 
 /* ---------- the factory: one big hall with machines, offices on a mezzanine ---------- */
@@ -1455,17 +1781,35 @@ function makeFactory(s, idx) {
     /* bottom row */
     S('Wharf Lofts', -62, -28, 138, 172, 'n', 'home'), S('Mast and Co', 1, 37, 138, 172, 'n', 'shop'), S('Buoy Flats', 56, 94, 138, 172, 'n', 'home'),
     S('Capstan Offices', 110, 146, 138, 172, 'n', 'office'), S('Mooring House', 167, 196, 138, 172, 'n', 'home'), S('Lantern Inn', 228, 266, 138, 172, 'n', 'home'),
-    S('Fathom Hall', 306, 352, 138, 172, 'n', 'office'), S('Bilge Bakery', 379, 400, 138, 172, 'n', 'shop'), S('Keel Cottages', 417, 444, 138, 172, 'n', 'home')
+    S('Fathom Hall', 306, 352, 138, 172, 'n', 'office'), S('Bilge Bakery', 379, 400, 138, 172, 'n', 'shop'), S('Keel Cottages', 417, 444, 138, 172, 'n', 'home'),
+    /* the island */
+    S('Beach Lodge', 246, 272, 404, 426, 'n', 'home'), S('Dune Cafe', 300, 326, 404, 426, 'n', 'shop')
   ];
   list.forEach((s, i) => makeBuilding(s, i + 1));
   makeFactory({ n: 'Harbor Works', x1: -76, x2: 112, z1: 84, z2: 106 }, 0);
 })();
 
+/* the hotel tower: five guest floors reached by the lobby elevator (or the stairs once you are up there) */
+(function () {
+  const hotel = layoutRecord({ n: 'Harbor Hotel', x1: -28, x2: 28, z1: -34, z2: -1, f: 's', st: 'hotel' }, 3);
+  hotel.top = 6; hotel.minFlight = 2; towers.push(hotel);
+  /* everything already built inside the hotel belongs to the ground floor only, so it must not block the new guest floors */
+  const inH = (x, z) => x > -31 && x < 31 && z > -35 && z < -0.4;
+  walkR.forEach(rc => { if (rc.lv === undefined && rc.x1 > -31.5 && rc.x2 < 31.5 && rc.z1 > -35.5 && rc.z2 < 0.5) rc.lv = 0; });
+  walkC.forEach(c => { if (inH(c.x, c.z)) c.lv = 0; });
+  obst.forEach(c => { if (inH(c.x, c.z)) c.lv = 0; });
+  const fl = [{ f: 0, label: 'G', x: 0, z: -20.5, ph: 0 }];
+  for (let f = 2; f <= 6; f++) fl.push({ f, label: String(f - 1), x: hotel.Xu(hotel.hc), z: hotel.Zv(hotel.D - 1.3), ph: 0 });
+  elevators.push({ name: 'Harbor Hotel', tw: hotel, floors: fl });
+})();
+
 /* what the HUD says about where you are */
 function placeAt(x, z, y) {
   const lv = LVL(y || 0);
-  if (z < 0.5 && z > -34 && x > -30 && x < 30) return 'Harbor Hotel, ' + zoneAt(x, z);
-  for (let i = 0; i < roomInfo.length; i++) { const r = roomInfo[i]; if (r.lv === lv && x > r.x1 && x < r.x2 && z > r.z1 && z < r.z2) return r.bname + ', ' + r.name + (lv ? ' (upstairs)' : ''); }
+  if (z < 0.5 && z > -34 && x > -30 && x < 30 && lv < 2) return 'Harbor Hotel, ' + zoneAt(x, z);
+  for (let i = 0; i < roomInfo.length; i++) { const r = roomInfo[i]; if (r.lv === lv && x > r.x1 && x < r.x2 && z > r.z1 && z < r.z2) return r.bname + ', ' + r.name + (lv === 0 ? '' : lv === 1 ? ' (upstairs)' : ' (floor ' + (r.bname === 'Harbor Hotel' ? lv - 1 : lv) + ')'); }
+  if (z >= QZ - 0.5) { if (Math.hypot(x - ISL.x, z - ISL.z) < ISL.r + 3) return 'Sea Island'; if (Math.abs(x - BX) < 9 && z < BR_END + 2) return 'Harbor Bridge'; return 'Open water'; }
+  if (z >= 130 && z < QZ && Math.abs(x - BX) < 9) return 'Bridge Road';
   for (let i = 0; i < bInfo.length; i++) { const b = bInfo[i]; if (x > b.x1 - 0.3 && x < b.x2 + 0.3 && z > b.z1 - 0.3 && z < b.z2 + 0.3) return b.name; }
   if (x > 120 && x < 138 && z > 30 && z < 114) return 'Factory Lane';
   if (z >= 14 && z < 30) return 'Harbor Road';
@@ -1683,6 +2027,12 @@ npc({ route: [{ x: -50, z: 34.5 }, { x: 50, z: 34.5 }], i0: 0, speed: 1.2 });
 })();
 
 
+/* strollers on the bridge and the island */
+npc({ route: [{ x: BX - 6.2, z: QZ + 6 }, { x: BX - 6.2, z: BR_END - 4 }], i0: 0, speed: 1.2 });
+npc({ route: [{ x: BX + 6.2, z: QZ + 6 }, { x: BX + 6.2, z: BR_END - 4 }], i0: 1, speed: 1.0 });
+npc({ route: [{ x: BX - 20, z: ISL.z }, { x: BX + 20, z: ISL.z + 4 }], i0: 0, speed: 1.1 });
+npc({ x: BX - 46, z: ISL.z - 4, hd: Math.PI / 2, st0: 'idle', look: { shirt: 0xe2b13c, pants: 0x3f7f8a } });
+
 /* --- doors slide open for anyone nearby --- */
 function updateDoors(dt) {
   let near = false;
@@ -1717,8 +2067,8 @@ function pushOut(o, r, lv) {
         if (mn === l) o.x = rc.x1 - r; else if (mn === rr) o.x = rc.x2 + r; else if (mn === tt) o.z = rc.z1 - r; else o.z = rc.z2 + r;
       }
     }
-    walkC.forEach(c => circ(c.x, c.z, c.r));
-    obst.forEach(c => circ(c.x, c.z, c.r));
+    walkC.forEach(c => { if (c.lv === undefined || c.lv === lv) circ(c.x, c.z, c.r); });
+    obst.forEach(c => { if (c.lv === undefined || c.lv === lv) circ(c.x, c.z, c.r); });
     traffic.forEach(t => { circ(t.x + t.dir * 1.25, t.z, 1.0); circ(t.x - t.dir * 1.25, t.z, 1.0); });
     circ(player.x + pc * 1.25, player.z + ps * 1.25, 1.0); circ(player.x - pc * 1.25, player.z - ps * 1.25, 1.0);
     Object.values(remotes).forEach(r => {
@@ -1838,7 +2188,7 @@ const hideCard = () => card.classList.remove('on');
 
 function showMenu() {
   setMode('menu'); G.phase = 'idle';
-  showCard('<h1>Harbor Valet</h1><p>A little harbor town to explore. Drive around the roads, then get out and walk into any building. Every building has two floors with real rooms and a staircase you can climb.</p><p class="sub">Visit the hotel, the factory, the skyscrapers and the shops, or play with friends.</p>',
+  showCard('<h1>Harbor Valet</h1><p>A little harbor town to explore. Drive around the roads, then get out and walk into any building. Every floor of every building is open, even the tall towers, by stairs or by elevator. Cross the long bridge at the end of Bridge Road to reach the sea island.</p><p class="sub">Visit the hotel, the factory, the skyscrapers, the shops and the island, or play with friends.</p>',
     [{ label: 'Drive around', primary: true, fn: startRun }, { label: 'Walk around', fn: startWalk }, { label: net.on ? 'Room ' + net.code + ' is open' : 'Play with friends', fn: net.on ? startWalk : showNetCard },
      { label: 'Tour the hotel', fn: () => { hideCard(); setMode('tour'); } }].concat(net.on ? [{ label: 'Leave room', fn: () => { netStop('You left the room'); showMenu(); } }] : []));
 }
@@ -1907,7 +2257,7 @@ function exitCar() {
   blip(240, 0.1, 'square', 0.07, 320);
 }
 function act() {
-  if (G.mode === 'foot') { if (me.sit) standUp(); else if (carDist() < 2.7) enterCar(); else { const st = nearestSeat(); if (st) sitDown(st); } }
+  if (G.mode === 'foot') { if (me.sit) standUp(); else { const ne = nearElevator(); if (ne) openElevator(ne.el); else if (carDist() < 2.7) enterCar(); else { const st = nearestSeat(); if (st) sitDown(st); } } }
   else if (G.mode === 'drive' && G.phase === 'free' && Math.hypot(player.vx, player.vz) < 3) exitCar();
 }
 
@@ -1937,7 +2287,7 @@ function collideAll() {
   traffic.forEach(t => [1.25, -1.25].forEach(off => resolve(t.x + t.dir * off, t.z, 1.0, t.dir * t.v, 0)));
   Object.values(remotes).forEach(r => [1.25, -1.25].forEach(off => resolve(r.acx + Math.cos(r.ach) * off, r.acz - Math.sin(r.ach) * off, 1.0, 0, 0)));
   /* buildings (the whole top row is kept off by WALL_Z) and the edges of the map */
-  bRects.forEach(rc => {
+  const hitRect = rc => {
     const c = Math.cos(player.h), s = -Math.sin(player.h);
     [1.25, -1.25].forEach(off => {
       const cx = player.x + c * off, cz = player.z + s * off;
@@ -1950,7 +2300,8 @@ function collideAll() {
       const vn = player.vx * nx + player.vz * nz;
       if (vn < 0) { player.vx -= 1.3 * vn * nx; player.vz -= 1.3 * vn * nz; bump(-vn); }
     });
-  });
+  };
+  bRects.forEach(hitRect); wRects.forEach(hitRect);
   const c = Math.cos(player.h), s = -Math.sin(player.h);
   [1.25, -1.25].forEach(off => {
     const cz = player.z + s * off;
@@ -2031,6 +2382,37 @@ function updateDrive(dt) {
   if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * (1 - Math.exp(-dt * 4)); camera.updateProjectionMatrix(); }
 }
 
+/* --- elevators and tall-building floors --- */
+let towersShown = false;
+function towerUpdate() {
+  const foot = G.mode === 'foot', L = foot ? LVL(me.y) : 0; let any = false;
+  towers.forEach(tw => {
+    const inside = foot && L >= 1 && me.x > tw.x1 - 1 && me.x < tw.x2 + 1 && me.z > tw.z1 - 1 && me.z < tw.z2 + 1;
+    if (inside) { any = true; for (let f = Math.max(2, L - 1); f <= Math.min(tw.top, L + 2); f++) buildPlate(tw, f); }
+    else if (!towersShown) return;
+    for (const k in tw.floors) tw.floors[k].visible = inside && Math.abs(+k - L) <= 2;
+  });
+  towersShown = any;
+}
+function nearElevator() {
+  for (const el of elevators) for (const fl of el.floors) {
+    if (Math.abs(fl.f * FH - me.y) < 1.2 && Math.hypot(fl.x - me.x, fl.z - me.z) < 2.0) return { el, fl };
+  }
+  return null;
+}
+function openElevator(el) {
+  const list = el.floors.slice().sort((a, b) => b.f - a.f);
+  showCard('<h1 style="font-size:34px">Elevator</h1><p class="sub">' + el.name + '. Pick a floor.</p><div class="fg">' +
+    list.map(fl => '<button class="fb" data-f="' + fl.f + '">' + fl.label + '</button>').join('') + '</div>', [{ label: 'Cancel', fn: hideCard }]);
+  panel.querySelectorAll('.fb').forEach(b => b.addEventListener('click', () => rideTo(el, +b.dataset.f)));
+}
+function rideTo(el, f) {
+  const fl = el.floors.find(q => q.f === f); if (!fl) return;
+  if (el.tw) for (let k = Math.max(2, f - 1); k <= Math.min(el.tw.top, f + 2); k++) buildPlate(el.tw, k);
+  me.x = fl.x; me.z = fl.z; me.y = f * FH; me.ph = fl.ph; me.v = 0; camP = me.ph; camD = 4.6;
+  hideCard(); toast(f === 0 ? 'Ground floor' : 'Floor ' + fl.label); blip(660, 0.12, 'sine', 0.08, 880);
+}
+
 /* --- on-foot step: walk, run, turn, third-person camera that never sits inside a wall --- */
 function updateFoot(dt) {
   const turn = ((kb.left || pad.left) ? 1 : 0) - ((kb.right || pad.right) ? 1 : 0);
@@ -2067,10 +2449,10 @@ function updateFoot(dt) {
   if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * (1 - Math.exp(-dt * 4)); camera.updateProjectionMatrix(); }
 
   /* HUD */
-  const nearCar = !me.sit && carDist() < 2.7, seat = !me.sit && !nearCar ? nearestSeat() : null;
-  $('goalTxt').textContent = me.sit ? 'Sitting. Press E or walk to stand' : nearCar ? 'Next to your car' : seat ? 'Free seat here' : placeAt(me.x, me.z, me.y);
-  actEl.classList.toggle('show', !!(me.sit || nearCar || seat));
-  actEl.textContent = me.sit ? 'Stand up (E)' : nearCar ? 'Get in the car (E)' : 'Sit down (E)';
+  const nel = !me.sit ? nearElevator() : null, nearCar = !me.sit && !nel && carDist() < 2.7, seat = !me.sit && !nel && !nearCar ? nearestSeat() : null;
+  $('goalTxt').textContent = me.sit ? 'Sitting. Press E or walk to stand' : nel ? 'Elevator. ' + placeAt(me.x, me.z, me.y) : nearCar ? 'Next to your car' : seat ? 'Free seat here' : placeAt(me.x, me.z, me.y);
+  actEl.classList.toggle('show', !!(me.sit || nel || nearCar || seat));
+  actEl.textContent = me.sit ? 'Stand up (E)' : nel ? 'Use the elevator (E)' : nearCar ? 'Get in the car (E)' : 'Sit down (E)';
 }
 
 /* --- tour step (unchanged behaviour) --- */
@@ -2117,6 +2499,8 @@ function frame(now) {
   head.target.position.set(player.x + Math.cos(player.h) * 14, 0.3, player.z - Math.sin(player.h) * 14);
   sky.position.copy(camera.position);
   water.map.offset.set(tClock * 0.015, tClock * 0.01);
+  seaMat.map.offset.set(tClock * 0.004, tClock * 0.002);
+  towerUpdate();
   updateLights();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
