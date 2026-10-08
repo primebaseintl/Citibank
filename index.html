@@ -7,7 +7,7 @@
 <meta name="description" content="Independent web and mobile developer in Nigeria building all kinds of websites, apps and 3D experiences.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --base:#131c26;
@@ -25,12 +25,6 @@
   a{color:inherit}
   :focus-visible{outline:3px solid var(--cap);outline-offset:4px;border-radius:2px}
 
-  .bgphoto{position:fixed;inset:0;z-index:0;overflow:hidden;background:var(--base)}
-  .bgphoto img{--bx:13vw;--px:0;--py:0;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;
-    transform:translate3d(calc(var(--bx) + var(--px)*1px),calc(var(--py)*1px),0) scale(1.08);
-    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 30%);mask-image:linear-gradient(90deg,transparent 0,#000 30%);
-    animation:photoin 1.6s cubic-bezier(.2,.8,.2,1) both}
-  @keyframes photoin{from{opacity:0;filter:blur(14px)}to{opacity:1;filter:none}}
   #bg{position:fixed;inset:0;width:100%;height:100%;z-index:1;display:block;opacity:.3;pointer-events:none}
   .shade{position:fixed;inset:0;z-index:1;pointer-events:none;background:var(--base);opacity:0}
   .veil{position:fixed;inset:0;z-index:1;pointer-events:none;
@@ -39,15 +33,22 @@
 
   /* nav */
   .nav{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:1.25rem clamp(1.25rem,4vw,3rem)}
-  .nav .logo{font-family:var(--display);font-weight:800;font-size:1.35rem;text-decoration:none;letter-spacing:-.02em}
+  .nav .logo{font-family:'Anton',var(--display);font-weight:400;font-size:1.5rem;text-decoration:none;letter-spacing:.04em;text-transform:uppercase}
   .nav ul{display:flex;gap:1.75rem;list-style:none}
   .nav a.link{text-decoration:none;font-weight:500;color:var(--fog);transition:color .2s}
   .nav a.link:hover{color:var(--bone)}
+  .nav .right{display:flex;align-items:center;gap:1.75rem}
+  .nav .btn{padding:.5rem 1.15rem;font-size:.95rem}
+  .reach{display:flex;gap:.5rem}
+  .reach a{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--bone);color:var(--bone);background:rgba(19,28,38,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:transform .2s,background .2s,color .2s,border-color .2s}
+  .reach a:hover{transform:translateY(-3px);background:var(--bone);color:var(--base)}
+  .reach a.wa:hover{background:#25d366;border-color:#25d366;color:#fff}
+  .reach svg{width:19px;height:19px;fill:currentColor}
 
   /* hero */
   .hero{min-height:100svh;display:grid;grid-template-columns:1fr;align-items:end;padding:6rem clamp(1.25rem,4vw,3rem) 3rem;gap:2rem;position:relative}
   .hero-copy{align-self:end;padding-bottom:2vh;position:relative;z-index:3}
-  .hero h1{font-family:var(--display);font-weight:800;font-size:clamp(5.5rem,19vw,19rem);line-height:.82;letter-spacing:-.05em;perspective:900px;margin-left:-.04em}
+  .hero h1{font-family:'Anton',var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(6rem,24vw,22rem);line-height:.9;letter-spacing:.01em;perspective:900px;margin-left:-.02em}
   .hero h1 .ch{display:inline-block;transform-origin:50% 100%;animation:flip 1.1s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*90ms + 150ms)}
   @keyframes flip{from{opacity:0;transform:rotateX(-100deg) translateY(30%)}to{opacity:1;transform:none}}
   .hero .role{margin-top:2rem;max-width:36ch;text-shadow:0 2px 20px rgba(19,28,38,.7);font-size:1.25rem;color:var(--bone)}
@@ -128,11 +129,18 @@
 
   @media (max-width:860px){
     .hero{padding-top:5.5rem}
-    .bgphoto img{--bx:0vw;object-position:52% 20%}
-    .hero h1{font-size:clamp(5rem,28vw,10rem)}
+    .hero h1{font-size:clamp(5rem,27vw,11rem)}
     .about{grid-template-columns:1fr}
     .s2,.s3,.s4{grid-column:span 6}
     .nav ul{gap:1rem}
+    .nav .right{gap:.9rem}
+  }
+  @media (max-width:640px){
+    .nav{flex-wrap:wrap;row-gap:.6rem;padding:1rem 1.25rem}
+    .nav .right{gap:.6rem}
+    .reach{gap:.4rem}
+    .reach a{width:36px;height:36px}
+    .nav .btn{padding:.4rem .9rem;font-size:.9rem}
     .ring{height:300px}
   }
   @media (prefers-reduced-motion:reduce){
@@ -141,27 +149,38 @@
     .cell{opacity:1;transform:none;transition:none}
     .wi{transform:none;transition:none}
     .rv{opacity:1;transform:none;transition:none}
-    .bgphoto img{animation:none}
     .card{transition:none}
   }
 </style>
 </head>
 <body>
 
-<div class="bgphoto" aria-hidden="true"><img id="bgimg" src="IMG_3626.JPG" alt=""></div>
 <canvas id="bg" aria-hidden="true"></canvas>
 <div class="shade" id="shade" aria-hidden="true"></div>
 <div class="veil" aria-hidden="true"></div>
 
 <header class="nav">
   <a class="logo" href="#top">Daniel</a>
-  <nav aria-label="Primary">
-    <ul>
-      <li><a class="link" href="#work">Work</a></li>
-      <li><a class="link" href="#stack">Stack</a></li>
-      <li><a class="link" href="#contact">Contact</a></li>
-    </ul>
-  </nav>
+  <div class="right">
+    <nav aria-label="Primary">
+      <ul>
+        <li><a class="link" href="#about">About us</a></li>
+      </ul>
+    </nav>
+    <a class="btn solid" href="#contact">Contact</a>
+    <!-- Call: 09122389112 | WhatsApp: 08076145461 (country code 234 used in the links). Email updated -->
+    <div class="reach" aria-label="Contact me directly">
+      <a href="tel:+2349122389112" aria-label="Call me">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg>
+      </a>
+      <a class="wa" href="https://wa.me/2348076145461" target="_blank" rel="noopener" aria-label="Message me on WhatsApp">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.9 9.9 0 0 0-8.5 14.9L2 22l5.25-1.38A9.9 9.9 0 1 0 12.04 2zm0 1.8a8.1 8.1 0 1 1-4.15 15.07l-.3-.18-3.1.82.83-3.02-.2-.31A8.1 8.1 0 0 1 12.04 3.8zm-3.3 3.9c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.07 3.3 5.1 4.5 2.52 1 3.03.8 3.58.75.55-.05 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.78-1.67-2.08-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.5z"/></svg>
+      </a>
+      <a href="mailto:Johnchibuikedaniel@gmail.com" aria-label="Email me">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.6V17h16V7.6l-8 5.4-8-5.4zM5.2 7 12 11.6 18.8 7H5.2z"/></svg>
+      </a>
+    </div>
+  </div>
 </header>
 
 <main id="top">
@@ -176,7 +195,7 @@
     </div>
   </section>
 
-  <section class="about" aria-labelledby="about-h">
+  <section class="about" id="about" aria-labelledby="about-h">
     <h2 id="about-h" data-split>I build the whole product.</h2>
     <div>
       <p data-split>The design, the code, the mobile app and the database behind it. I work independently across several projects at once, so each one gets one builder from start to finish, not a hand-off between three people.</p>
@@ -197,19 +216,14 @@
       </a></div>
       <div class="cell s2"><a class="card c-green" href="#" data-tilt>
         <span class="glyph" aria-hidden="true">E</span>
-        <div><h3>EarnOva</h3><p>Affiliate and creator earnings with sales tracking, payouts that enforce a ₦200 minimum in the database, and a premium subscription through Paystack.</p></div>
-        <ul><li>Supabase</li><li>Paystack</li><li>PostgreSQL</li></ul>
+        <div><h3>EarnOva</h3><p>An affiliate marketing platform built for affiliate marketers, with sales tracking and earnings payouts.</p></div>
+        <ul><li>Affiliate marketing</li><li>Supabase</li><li>PostgreSQL</li></ul>
       </a></div>
 
-      <div class="cell s2"><a class="card c-red" href="#" data-tilt>
-        <span class="glyph" aria-hidden="true">H</span>
-        <div><h3>Harbor Valet</h3><p>A 3D driving game and hotel tour in a single Three.js file. Next: driving across real Nigerian roads from OpenStreetMap.</p></div>
-        <ul><li>Three.js</li><li>WebGL</li></ul>
-      </a></div>
       <div class="cell s2"><a class="card c-slate" href="#" data-tilt>
         <span class="glyph" aria-hidden="true">A</span>
-        <div><h3>Atlas</h3><p>A shop platform where plans expire and shop owners renew through Paystack.</p></div>
-        <ul><li>Paystack</li><li>Supabase</li></ul>
+        <div><h3>Atlas</h3><p>A marketplace where shop owners open their shops and sell to buyers in one place.</p></div>
+        <ul><li>Marketplace</li><li>Supabase</li></ul>
       </a></div>
       <div class="cell s2"><a class="card c-bone" href="#" data-tilt>
         <span class="glyph" aria-hidden="true">F</span>
@@ -217,15 +231,10 @@
         <ul><li>HTML/CSS/JS</li><li>Pricing tiers</li></ul>
       </a></div>
 
-      <div class="cell s3"><a class="card c-teal" href="#" data-tilt>
+      <div class="cell s2"><a class="card c-teal" href="#" data-tilt>
         <span class="glyph" aria-hidden="true">P</span>
-        <div><h3>PrimeBase</h3><p>A task and click-earning platform with payouts and ad integration, on its own Supabase project.</p></div>
-        <ul><li>Supabase</li><li>Payouts</li><li>Ads</li></ul>
-      </a></div>
-      <div class="cell s3"><a class="card c-sand" href="#" data-tilt>
-        <span class="glyph" aria-hidden="true">N</span>
-        <div><h3>PrimeBase NG</h3><p>A partner-facing platform with sponsored posts, job offers and partner payouts.</p></div>
-        <ul><li>Supabase</li><li>Partner payouts</li></ul>
+        <div><h3>PrimeBase</h3><p>A task platform where people come, complete tasks and earn money.</p></div>
+        <ul><li>Supabase</li><li>Tasks</li><li>Payouts</li></ul>
       </a></div>
     </div>
   </section>
@@ -238,11 +247,10 @@
 
   <section class="contact" id="contact" aria-labelledby="contact-h">
     <h2 id="contact-h" data-split>Have something to build?</h2>
-    <a class="mail rv" id="mail" href="mailto:hello@example.com">hello@example.com</a>
+    <a class="mail rv" id="mail" href="mailto:Johnchibuikedaniel@gmail.com">Johnchibuikedaniel@gmail.com</a>
     <div class="links rv">
-      <a href="#">GitHub</a>
-      <a href="#">X</a>
-      <a href="#">LinkedIn</a>
+      <a href="https://www.instagram.com/yhung_presido_" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://www.tiktok.com/@realpresido_01" target="_blank" rel="noopener">TikTok</a>
     </div>
   </section>
 </main>
@@ -263,9 +271,7 @@
     nameEl.appendChild(s);
   });
 
-  const bgimg = document.getElementById('bgimg');
   const shade = document.getElementById('shade');
-  bgimg.onerror = ()=>{ bgimg.style.display='none'; };
 
   /* ---------- pointer state ---------- */
   const mouse = {x:0,y:0}, ms = {x:0,y:0};
@@ -368,13 +374,8 @@
     const dt = Math.min((now-last)/1000, .05); last = now;
     ms.x += (mouse.x-ms.x)*.06; ms.y += (mouse.y-ms.y)*.06;
 
-    /* photo parallax, and the photo darkens as the lattice takes over on scroll */
+    /* the lattice gets brighter as you scroll */
     const t = Math.min(scrollY/(innerHeight*.85), 1);
-    if(!reduce){
-      bgimg.style.setProperty('--px', (-ms.x*16).toFixed(2));
-      bgimg.style.setProperty('--py', (-ms.y*10 - scrollY*.08).toFixed(2));
-    }
-    shade.style.opacity = (t*.82).toFixed(3);
     canvas.style.opacity = (.3 + .7*t).toFixed(3);
 
     if(renderer){
@@ -403,7 +404,7 @@
   });
 
   /* ---------- 3D tech ring ---------- */
-  const techs = ['Flutter','Supabase','Paystack','VTPass','PostgreSQL','Edge Functions','Three.js','HTML/CSS/JS','Provider','Godot'];
+  const techs = ['Flutter','Supabase','Paystack','VTPass','PostgreSQL','Edge Functions','Three.js','HTML/CSS/JS','Provider','Godot','Unity','Unreal Engine','GDScript','Blender','Dart','JavaScript'];
   const hot = new Set(['Supabase','Paystack','Flutter']);
   const ring = document.getElementById('ring');
   const items = techs.map(t=>{
