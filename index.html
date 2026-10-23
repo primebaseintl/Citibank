@@ -1,514 +1,228 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Daniel | Websites and apps of every kind</title>
-<meta name="description" content="Independent web and mobile developer in Nigeria building all kinds of websites, apps and 3D experiences.">
+<title>How EarnOva works: get the course, build a team, earn</title>
+<meta name="description" content="Register, get the course files, then refer other affiliate marketers. Every sale they make pays you.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --base:#131c26;
-    --slate:#1d2935;
-    --denim:#3b5a78;
-    --fog:#8ea1b2;
-    --bone:#edf1f4;
-    --cap:#e0392f;
-    --display:'Bricolage Grotesque',system-ui,sans-serif;
-    --body:'Hanken Grotesk',system-ui,sans-serif;
+  :root {
+    --bg: #f6f8ff;
+    --card: #ffffff;
+    --ink: #101636;
+    --muted: #55608a;
+    --line: #d9deef;
+    --blue: #2a37f5;
+    --blue-deep: #1a23b8;
+    --mint: #b9f3d3;
+    --mint-deep: #0b8a52;
+    --sun: #ffd84d;
+    --node-fill: #ffffff;
+    --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+    --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{background:var(--base);color:var(--bone);font-family:var(--body);font-size:1.0625rem;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-  a{color:inherit}
-  :focus-visible{outline:3px solid var(--cap);outline-offset:4px;border-radius:2px}
-
-  #bg{position:fixed;inset:0;width:100%;height:100%;z-index:1;display:block;opacity:.3;pointer-events:none}
-  .shade{position:fixed;inset:0;z-index:1;pointer-events:none;background:var(--base);opacity:0}
-  .veil{position:fixed;inset:0;z-index:1;pointer-events:none;
-    background:linear-gradient(0deg,rgba(19,28,38,.9) 0,rgba(19,28,38,.35) 38%,transparent 65%),radial-gradient(120% 90% at 50% 40%,transparent 40%,rgba(19,28,38,.8) 100%)}
-  main,header,footer{position:relative;z-index:2}
-
-  /* nav */
-  .nav{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:1.25rem clamp(1.25rem,4vw,3rem)}
-  .nav .logo{font-family:'Anton',var(--display);font-weight:400;font-size:1.5rem;text-decoration:none;letter-spacing:.04em;text-transform:uppercase}
-  .nav ul{display:flex;gap:1.75rem;list-style:none}
-  .nav a.link{text-decoration:none;font-weight:500;color:var(--fog);transition:color .2s}
-  .nav a.link:hover{color:var(--bone)}
-  .nav .right{display:flex;align-items:center;gap:1.75rem}
-  .nav .btn{padding:.5rem 1.15rem;font-size:.95rem}
-  .reach{display:flex;gap:.5rem}
-  .reach a{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--bone);color:var(--bone);background:rgba(19,28,38,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:transform .2s,background .2s,color .2s,border-color .2s}
-  .reach a:hover{transform:translateY(-3px);background:var(--bone);color:var(--base)}
-  .reach a.wa:hover{background:#25d366;border-color:#25d366;color:#fff}
-  .reach svg{width:19px;height:19px;fill:currentColor}
-
-  /* hero */
-  .hero{min-height:100svh;display:grid;grid-template-columns:1fr;align-items:end;padding:6rem clamp(1.25rem,4vw,3rem) 3rem;gap:2rem;position:relative}
-  .hero-copy{align-self:end;padding-bottom:2vh;position:relative;z-index:3}
-  .hero h1{font-family:'Anton',var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(6rem,24vw,22rem);line-height:.9;letter-spacing:.01em;perspective:900px;margin-left:-.02em}
-  .hero h1 .ch{display:inline-block;transform-origin:50% 100%;animation:flip 1.1s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*90ms + 150ms)}
-  @keyframes flip{from{opacity:0;transform:rotateX(-100deg) translateY(30%)}to{opacity:1;transform:none}}
-  .hero .role{margin-top:2rem;max-width:36ch;text-shadow:0 2px 20px rgba(19,28,38,.7);font-size:1.25rem;color:var(--bone)}
-  .hero .role span{color:#c3d0db}
-  .hero .actions{margin-top:2rem;display:flex;gap:.75rem;flex-wrap:wrap;animation:rise .9s 1s both cubic-bezier(.2,.8,.2,1)}
-  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-  .btn{display:inline-block;padding:.85rem 1.4rem;border-radius:999px;font-weight:600;text-decoration:none;border:2px solid var(--bone);transition:transform .2s,background .2s,color .2s}
-  .btn.solid{background:var(--cap);border-color:var(--cap);color:#fff}
-  .btn:hover{transform:translateY(-3px)}
-  .btn.ghost:hover{background:var(--bone);color:var(--base)}
-
-
-  /* text reveal: each word opens up from behind a mask */
-  .w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em}
-  .wi{display:inline-block;transform:translateY(112%) rotate(5deg);transform-origin:0 100%;
-    transition:transform .95s cubic-bezier(.2,.8,.2,1);transition-delay:calc(var(--d)*50ms)}
-  .in .wi{transform:none}
-  .hero .wi{transition-delay:calc(var(--d)*45ms + 800ms)}
-  .rv{opacity:0;transform:translateY(20px);transition:opacity .8s,transform .9s cubic-bezier(.2,.8,.2,1)}
-  .rv.in{opacity:1;transform:none}
-  /* rolling swap on links and buttons */
-  .nav a.link{display:inline-block}
-  .rl{display:block;position:relative;overflow:hidden;line-height:1.35}
-  .rl .a,.rl .b{display:block;white-space:nowrap;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
-  .rl .b{position:absolute;left:0;top:100%}
-  a:hover .rl .a,a:hover .rl .b,a:focus-visible .rl .a,a:focus-visible .rl .b{transform:translateY(-100%)}
-
-  /* sections */
-  section{padding:clamp(5rem,12vw,10rem) clamp(1.25rem,4vw,3rem)}
-  h2{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,5rem);line-height:.98;letter-spacing:-.035em;max-width:16ch}
-
-  .about{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,6vw,6rem);align-items:start}
-  .about p{max-width:52ch;color:#cdd7df}
-  .about p+p{margin-top:1.1rem}
-
-  /* work */
-  .work-head{display:flex;justify-content:space-between;align-items:end;gap:2rem;margin-bottom:3rem;flex-wrap:wrap}
-  .work-head p{color:var(--fog);max-width:36ch}
-  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:1.25rem;perspective:1400px}
-  .cell{opacity:0;transform:rotateX(16deg) translateY(50px);transform-origin:50% 100%;transition:opacity .8s,transform 1s cubic-bezier(.2,.8,.2,1)}
-  .cell.in{opacity:1;transform:none}
-  .s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}
-  .card{--rx:0deg;--ry:0deg;--mx:50%;--my:50%;position:relative;height:100%;min-height:290px;padding:1.75rem;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;background:var(--bg);color:var(--fg);
-    transform:perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));transition:transform .25s ease-out;text-decoration:none}
-  .card::after{content:"";position:absolute;inset:0;background:radial-gradient(260px circle at var(--mx) var(--my),rgba(255,255,255,.22),transparent 60%);opacity:0;transition:opacity .25s;pointer-events:none}
-  .card:hover::after{opacity:1}
-  .card .glyph{position:absolute;right:-.08em;top:-.2em;font-family:var(--display);font-weight:800;font-size:11rem;line-height:1;letter-spacing:-.06em;opacity:.14;pointer-events:none}
-  .card h3{font-family:var(--display);font-weight:800;font-size:clamp(1.8rem,3vw,2.6rem);letter-spacing:-.03em;line-height:1;position:relative}
-  .card p{margin-top:.8rem;max-width:42ch;position:relative;opacity:.92}
-  .card ul{list-style:none;display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1.4rem;position:relative}
-  .card li{font-size:.85rem;font-weight:600;padding:.25rem .65rem;border-radius:999px;border:1.5px solid currentColor;opacity:.85}
-  .c-blue{--bg:#1f4f8f;--fg:#eaf2ff}
-  .c-green{--bg:#e7efe1;--fg:#16301f}
-  .c-red{--bg:#e0392f;--fg:#fff}
-  .c-bone{--bg:#edf1f4;--fg:#131c26}
-  .c-slate{--bg:#2a3b4c;--fg:#edf1f4}
-  .c-teal{--bg:#0f6b6b;--fg:#e6fbf8}
-  .c-sand{--bg:#d9c9a8;--fg:#2a2112}
-
-  /* stack ring */
-  .stack{text-align:center;overflow:hidden}
-  .stack h2{margin:0 auto}
-  .stack .sub{color:var(--fog);margin:1rem auto 0;max-width:40ch}
-  .ring{position:relative;height:340px;margin-top:2rem;perspective:1100px;cursor:grab;touch-action:pan-y;user-select:none}
-  .ring:active{cursor:grabbing}
-  .ring .item{position:absolute;left:50%;top:50%;width:170px;margin:-26px 0 0 -85px;padding:.8rem 0;border-radius:999px;background:var(--slate);border:2px solid var(--denim);font-family:var(--display);font-weight:800;font-size:1.1rem;letter-spacing:-.01em;will-change:transform}
-  .ring .item.hot{background:var(--cap);border-color:var(--cap)}
-
-  /* contact */
-  .contact{min-height:80svh;display:flex;flex-direction:column;justify-content:center}
-  .contact h2{max-width:12ch;font-size:clamp(3rem,10vw,9rem);line-height:.9}
-  .contact .mail{display:inline-block;margin-top:2.5rem;font-family:var(--display);font-weight:800;font-size:clamp(1.4rem,3.4vw,2.6rem);letter-spacing:-.02em;text-decoration:none;border-bottom:4px solid var(--cap);padding-bottom:.2rem;transition:color .2s,opacity .8s,transform .9s cubic-bezier(.2,.8,.2,1)}
-  .contact .mail:hover{color:var(--cap)}
-  .contact .links{margin-top:2rem;display:flex;gap:1.5rem;flex-wrap:wrap;color:var(--fog)}
-  .contact .links a{text-decoration:none;font-weight:500}
-  .contact .links a:hover{color:var(--bone)}
-  footer{padding:2rem clamp(1.25rem,4vw,3rem);color:var(--fog);font-size:.9rem}
-
-  @media (max-width:860px){
-    .hero{padding-top:5.5rem}
-    .hero h1{font-size:clamp(5rem,27vw,11rem)}
-    .about{grid-template-columns:1fr}
-    .s2,.s3,.s4{grid-column:span 6}
-    .nav ul{gap:1rem}
-    .nav .right{gap:.9rem}
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b1030;
+      --card: #141a47;
+      --ink: #eef0ff;
+      --muted: #a9b2e0;
+      --line: #2a3270;
+      --blue: #5b66ff;
+      --blue-deep: #7a84ff;
+      --mint-deep: #5ee0a1;
+      --node-fill: #1b2257;
+    }
   }
-  @media (max-width:640px){
-    .nav{flex-wrap:wrap;row-gap:.6rem;padding:1rem 1.25rem}
-    .nav .right{gap:.6rem}
-    .reach{gap:.4rem}
-    .reach a{width:36px;height:36px}
-    .nav .btn{padding:.4rem .9rem;font-size:.9rem}
-    .ring{height:300px}
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
   }
-  @media (prefers-reduced-motion:reduce){
-    html{scroll-behavior:auto}
-    .hero h1 .ch,.hero .actions,.stage{animation:none}
-    .cell{opacity:1;transform:none;transition:none}
-    .wi{transform:none;transition:none}
-    .rv{opacity:1;transform:none;transition:none}
-    .card{transition:none}
+  h1, h2, h3, .logo { font-family: var(--font-display); letter-spacing: -0.02em; }
+  p { margin: 0 0 1rem; max-width: 60ch; }
+  .wrap { width: min(1040px, 100% - 2.5rem); margin-inline: auto; }
+
+  header { padding-block: 1.1rem; }
+  .logo { display: inline-flex; align-items: center; gap: 0.55rem; font-weight: 800; font-size: 1.4rem; color: var(--ink); text-decoration: none; }
+
+  .hero { padding: 1.2rem 0 1.8rem; }
+  h1 { font-size: clamp(2.2rem, 7vw, 4rem); line-height: 1.02; font-weight: 800; margin: 0 0 1rem; max-width: 16ch; }
+  .lead { font-size: 1.2rem; color: var(--muted); max-width: 46ch; }
+
+  .grid { display: grid; gap: 2rem; padding-bottom: 3rem; }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: 1.05fr 0.95fr; gap: 3.5rem; align-items: start; }
+    .diagram { position: sticky; top: 1.2rem; }
   }
+
+  /* the diagram */
+  .diagram { background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 0.6rem 0.6rem 1.2rem; }
+  .map { display: block; width: 100%; height: auto; }
+  .orbit { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 3 7; }
+  .hub { fill: var(--blue); }
+  .hub-title { font-family: var(--font-display); font-weight: 800; font-size: 28px; fill: #fff; }
+  .hub-sub { font-family: var(--font-body); font-weight: 600; font-size: 11.5px; fill: var(--mint); }
+  .node { fill: var(--node-fill); stroke: var(--blue); stroke-width: 2.5; }
+  .person { fill: var(--blue); }
+  .out { stroke: var(--blue); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 7 7; animation: flow 1.1s linear infinite; }
+  .back { fill: none; stroke: var(--mint-deep); stroke-width: 3; stroke-linecap: round; }
+  .ah-blue { fill: var(--blue); }
+  .ah-mint { fill: var(--mint-deep); }
+  .coin-fill { fill: var(--sun); stroke: #101636; stroke-width: 1; }
+  .coin-text { font-family: var(--font-body); font-weight: 700; font-size: 10px; fill: #101636; }
+  @keyframes flow { to { stroke-dashoffset: -28; } }
+  @media (prefers-reduced-motion: reduce) {
+    .out { animation: none; }
+    .coin { display: none; }
+  }
+
+  .legend { list-style: none; margin: 0.8rem 1rem 0; padding: 0; display: grid; gap: 0.7rem; }
+  .legend li { display: flex; align-items: center; gap: 0.8rem; font-size: 0.97rem; }
+  .legend svg { flex: none; width: 54px; height: 20px; }
+
+  /* the explanation */
+  h2 { font-size: clamp(1.5rem, 3.6vw, 2rem); line-height: 1.15; margin: 0 0 1rem; }
+  .steps { list-style: none; margin: 0 0 2.4rem; padding: 0; counter-reset: step; }
+  .steps li { position: relative; padding: 0 0 1.4rem 3.4rem; counter-increment: step; }
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 0;
+    width: 2.3rem; height: 2.3rem; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--blue); color: #fff; font-family: var(--font-display); font-weight: 800;
+  }
+  .steps li:not(:last-child)::after {
+    content: ""; position: absolute; left: 1.15rem; top: 2.5rem; bottom: 0.2rem; width: 2px; background: var(--line);
+  }
+  .steps h3 { margin: 0 0 0.2rem; font-size: 1.2rem; }
+  .steps p { margin: 0; color: var(--muted); }
+
+  .earn { margin: 0 0 1.6rem; padding: 0; list-style: none; border-top: 2px solid var(--ink); }
+  .earn li { display: grid; grid-template-columns: 5.2rem 1fr; gap: 1rem; align-items: baseline; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
+  .earn strong { font-family: var(--font-display); font-weight: 800; font-size: 1.9rem; line-height: 1; color: var(--blue); }
+
+  .btn {
+    display: inline-block; background: var(--blue); color: #fff; text-decoration: none;
+    font-weight: 700; padding: 0.9rem 1.7rem; border-radius: 999px; border: 2px solid var(--blue);
+  }
+  .btn:hover { background: var(--blue-deep); border-color: var(--blue-deep); }
+  .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  .note { font-size: 0.88rem; color: var(--muted); margin: 1.2rem 0 0; }
+  footer { padding: 1.5rem 0 2.5rem; font-size: 0.9rem; color: var(--muted); border-top: 1px solid var(--line); }
 </style>
 </head>
 <body>
-
-<canvas id="bg" aria-hidden="true"></canvas>
-<div class="shade" id="shade" aria-hidden="true"></div>
-<div class="veil" aria-hidden="true"></div>
-
-<header class="nav">
-  <a class="logo" href="#top">Daniel</a>
-  <div class="right">
-    <nav aria-label="Primary">
-      <ul>
-        <li><a class="link" href="#about">About us</a></li>
-      </ul>
-    </nav>
-    <a class="btn solid" href="#contact">Contact</a>
-    <!-- Call: 09122389112 | WhatsApp: 08076145461 (country code 234 used in the links). Email updated -->
-    <div class="reach" aria-label="Contact me directly">
-      <a href="tel:+2349122389112" aria-label="Call me">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg>
-      </a>
-      <a class="wa" href="https://wa.me/2348076145461" target="_blank" rel="noopener" aria-label="Message me on WhatsApp">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.9 9.9 0 0 0-8.5 14.9L2 22l5.25-1.38A9.9 9.9 0 1 0 12.04 2zm0 1.8a8.1 8.1 0 1 1-4.15 15.07l-.3-.18-3.1.82.83-3.02-.2-.31A8.1 8.1 0 0 1 12.04 3.8zm-3.3 3.9c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.07 3.3 5.1 4.5 2.52 1 3.03.8 3.58.75.55-.05 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.78-1.67-2.08-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.5z"/></svg>
-      </a>
-      <a href="mailto:Johnchibuikedaniel@gmail.com" aria-label="Email me">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.6V17h16V7.6l-8 5.4-8-5.4zM5.2 7 12 11.6 18.8 7H5.2z"/></svg>
-      </a>
-    </div>
+<header>
+  <div class="wrap">
+    <a class="logo" href="https://earnova.online" aria-label="EarnOva">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="13" fill="#2a37f5"/><path d="M8 15.5 12.2 19.5 20 9" fill="none" stroke="#b9f3d3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      EarnOva
+    </a>
   </div>
 </header>
 
-<main id="top">
-  <section class="hero" aria-label="Introduction">
-    <div class="hero-copy">
-      <h1 aria-label="Daniel" id="name"></h1>
-      <p class="role" data-split>Independent web and mobile developer. <span>I build all kinds of websites and apps, from business sites and online stores to dashboards, platforms and 3D experiences.</span></p>
-      <div class="actions">
-        <a class="btn solid" href="#work">See the work</a>
-        <a class="btn ghost" href="#contact">Start a project</a>
-      </div>
-    </div>
+<main class="wrap">
+  <section class="hero">
+    <h1>Get the course. Build a team. Earn from every sale.</h1>
+    <p class="lead">Register and the course files are yours. Then bring in other affiliate marketers to promote it, and every sale they make pays you.</p>
   </section>
 
-  <section class="about" id="about" aria-labelledby="about-h">
-    <h2 id="about-h" data-split>I build the whole product.</h2>
+  <div class="grid">
+    <figure class="diagram" style="margin:0">
+      <svg class="map" viewBox="0 36 420 428" role="img" aria-labelledby="map-title map-desc" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title id="map-title">How your team earns you money</title>
+  <desc id="map-desc">A large circle in the middle is you, holding the course files and your own link. Blue arrows go out to six affiliate marketers you refer. Green arrows with naira coins come back from each of them to you, showing that their sales pay you.</desc>
+  <defs>
+    <marker id="ah-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="ah-blue"/></marker>
+    <marker id="ah-mint" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="ah-mint"/></marker>
+  </defs>
+  <circle cx="210" cy="250" r="168" class="orbit"/>
+    <line class="out" x1="202.0" y1="186.0" x2="202.0" y2="116.0" marker-end="url(#ah-blue)"/>
+  <line class="out" x1="261.4" y1="211.1" x2="322.0" y2="176.1" marker-end="url(#ah-blue)"/>
+  <line class="out" x1="269.4" y1="275.1" x2="330.0" y2="310.1" marker-end="url(#ah-blue)"/>
+  <line class="out" x1="218.0" y1="314.0" x2="218.0" y2="384.0" marker-end="url(#ah-blue)"/>
+  <line class="out" x1="158.6" y1="288.9" x2="98.0" y2="323.9" marker-end="url(#ah-blue)"/>
+  <line class="out" x1="150.6" y1="224.9" x2="90.0" y2="189.9" marker-end="url(#ah-blue)"/>
+    <path id="ret0" class="back" d="M218.0 116.0 L218.0 186.0" marker-end="url(#ah-mint)"/>
+  <path id="ret1" class="back" d="M330.0 189.9 L269.4 224.9" marker-end="url(#ah-mint)"/>
+  <path id="ret2" class="back" d="M322.0 323.9 L261.4 288.9" marker-end="url(#ah-mint)"/>
+  <path id="ret3" class="back" d="M202.0 384.0 L202.0 314.0" marker-end="url(#ah-mint)"/>
+  <path id="ret4" class="back" d="M90.0 310.1 L150.6 275.1" marker-end="url(#ah-mint)"/>
+  <path id="ret5" class="back" d="M98.0 176.1 L158.6 211.1" marker-end="url(#ah-mint)"/>
+  <circle cx="210" cy="250" r="56" class="hub"/>
+  <text x="210" y="248" text-anchor="middle" class="hub-title">You</text>
+  <text x="210" y="266" text-anchor="middle" class="hub-sub">course files</text>
+  <text x="210" y="280" text-anchor="middle" class="hub-sub">+ your link</text>
+    <g transform="translate(210.0 82.0)"><circle r="26" class="node"/><circle cy="-6" r="7" class="person"/><path d="M-13 13 a13 13 0 0 1 26 0 z" class="person"/></g>
+  <g transform="translate(355.5 166.0)"><circle r="26" class="node"/><circle cy="-6" r="7" class="person"/><path d="M-13 13 a13 13 0 0 1 26 0 z" class="person"/></g>
+  <g transform="translate(355.5 334.0)"><circle r="26" class="node"/><circle cy="-6" r="7" class="person"/><path d="M-13 13 a13 13 0 0 1 26 0 z" class="person"/></g>
+  <g transform="translate(210.0 418.0)"><circle r="26" class="node"/><circle cy="-6" r="7" class="person"/><path d="M-13 13 a13 13 0 0 1 26 0 z" class="person"/></g>
+  <g transform="translate(64.5 334.0)"><circle r="26" class="node"/><circle cy="-6" r="7" class="person"/><path d="M-13 13 a13 13 0 0 1 26 0 z" class="person"/></g>
+  <g transform="translate(64.5 166.0)"><circle r="26" class="node"/><circle cy="-6" r="7" class="person"/><path d="M-13 13 a13 13 0 0 1 26 0 z" class="person"/></g>
+    <g class="coin" visibility="hidden"><set attributeName="visibility" to="visible" begin="0.0s" fill="freeze"/><animateMotion dur="2.4s" begin="0.0s" repeatCount="indefinite" rotate="0"><mpath href="#ret0" xlink:href="#ret0"/></animateMotion><circle r="8" class="coin-fill"/><text y="3.4" text-anchor="middle" class="coin-text">&#8358;</text></g>
+  <g class="coin" visibility="hidden"><set attributeName="visibility" to="visible" begin="0.4s" fill="freeze"/><animateMotion dur="2.4s" begin="0.4s" repeatCount="indefinite" rotate="0"><mpath href="#ret1" xlink:href="#ret1"/></animateMotion><circle r="8" class="coin-fill"/><text y="3.4" text-anchor="middle" class="coin-text">&#8358;</text></g>
+  <g class="coin" visibility="hidden"><set attributeName="visibility" to="visible" begin="0.8s" fill="freeze"/><animateMotion dur="2.4s" begin="0.8s" repeatCount="indefinite" rotate="0"><mpath href="#ret2" xlink:href="#ret2"/></animateMotion><circle r="8" class="coin-fill"/><text y="3.4" text-anchor="middle" class="coin-text">&#8358;</text></g>
+  <g class="coin" visibility="hidden"><set attributeName="visibility" to="visible" begin="1.2s" fill="freeze"/><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite" rotate="0"><mpath href="#ret3" xlink:href="#ret3"/></animateMotion><circle r="8" class="coin-fill"/><text y="3.4" text-anchor="middle" class="coin-text">&#8358;</text></g>
+  <g class="coin" visibility="hidden"><set attributeName="visibility" to="visible" begin="1.6s" fill="freeze"/><animateMotion dur="2.4s" begin="1.6s" repeatCount="indefinite" rotate="0"><mpath href="#ret4" xlink:href="#ret4"/></animateMotion><circle r="8" class="coin-fill"/><text y="3.4" text-anchor="middle" class="coin-text">&#8358;</text></g>
+  <g class="coin" visibility="hidden"><set attributeName="visibility" to="visible" begin="2.0s" fill="freeze"/><animateMotion dur="2.4s" begin="2.0s" repeatCount="indefinite" rotate="0"><mpath href="#ret5" xlink:href="#ret5"/></animateMotion><circle r="8" class="coin-fill"/><text y="3.4" text-anchor="middle" class="coin-text">&#8358;</text></g>
+</svg>
+      <ul class="legend">
+        <li>
+          <svg viewBox="0 0 54 20" aria-hidden="true"><line x1="3" y1="10" x2="40" y2="10" stroke="var(--blue)" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 7"/><path d="M38 4 L50 10 L38 16 z" fill="var(--blue)"/></svg>
+          <span>You refer an affiliate marketer to your team.</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 54 20" aria-hidden="true"><line x1="50" y1="10" x2="14" y2="10" stroke="var(--mint-deep)" stroke-width="3" stroke-linecap="round"/><path d="M16 4 L4 10 L16 16 z" fill="var(--mint-deep)"/><circle cx="30" cy="10" r="8" fill="#ffd84d" stroke="#101636"/><text x="30" y="13.4" text-anchor="middle" font-size="10" font-weight="700" fill="#101636">&#8358;</text></svg>
+          <span>They promote the course. When it sells, you earn.</span>
+        </li>
+      </ul>
+    </figure>
+
     <div>
-      <p data-split>The design, the code, the mobile app and the database behind it. I work independently across several projects at once, so each one gets one builder from start to finish, not a hand-off between three people.</p>
-      <p data-split>Business websites, online stores, dashboards, mobile apps and full platforms. When a project needs accounts, payments or a live database, I build that too. I also make 3D experiences and games in Three.js and Godot.</p>
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li>
+          <h3>Register and get the course</h3>
+          <p>Create your EarnOva account and download the course files to your phone.</p>
+        </li>
+        <li>
+          <h3>Get your own link</h3>
+          <p>You get a personal link, like yourname.earnova.online. It has your name on it.</p>
+        </li>
+        <li>
+          <h3>Refer affiliate marketers</h3>
+          <p>Send your link to other marketers. When they join through it, they are on your team.</p>
+        </li>
+        <li>
+          <h3>They promote it, you earn</h3>
+          <p>Every sale through your link pays you. When your team sells, you earn from their sales too.</p>
+        </li>
+      </ol>
+
+      <h2>What you earn</h2>
+      <ul class="earn">
+        <li><strong>&#8358;500</strong><span>when someone joins through your link and activates their account.</span></li>
+        <li><strong>70%</strong><span>of the course price when it is bought through your link.</span></li>
+        <li><strong>35%</strong><span>of every sale made through your team's links.</span></li>
+      </ul>
+
+      <a class="btn" href="https://earnova.online/signup">Join EarnOva</a>
+      <p class="note">These are the current EarnOva rates. What you earn depends on how many people join and buy. Nothing is guaranteed.</p>
     </div>
-  </section>
-
-  <section id="work" aria-labelledby="work-h">
-    <div class="work-head">
-      <h2 id="work-h" data-split>Selected work</h2>
-      <p data-split>Move your cursor over a project to tilt it.</p>
-    </div>
-    <div class="grid">
-      <div class="cell s4"><a class="card c-blue" href="#" data-tilt>
-        <span class="glyph" aria-hidden="true">B</span>
-        <div><h3>BluePay</h3><p>A multi-page fintech platform for transfers, currency conversion, cards and bill payments, with PIN-protected transfers and tokenized cards. A separate Flutter escrow app runs on Supabase Realtime.</p></div>
-        <ul><li>Supabase</li><li>Paystack DVA</li><li>VTPass</li><li>Flutter</li><li>Edge Functions</li></ul>
-      </a></div>
-      <div class="cell s2"><a class="card c-green" href="#" data-tilt>
-        <span class="glyph" aria-hidden="true">E</span>
-        <div><h3>EarnOva</h3><p>An affiliate marketing platform built for affiliate marketers, with sales tracking and earnings payouts.</p></div>
-        <ul><li>Affiliate marketing</li><li>Supabase</li><li>PostgreSQL</li></ul>
-      </a></div>
-
-      <div class="cell s2"><a class="card c-slate" href="#" data-tilt>
-        <span class="glyph" aria-hidden="true">A</span>
-        <div><h3>Atlas</h3><p>A marketplace where shop owners open their shops and sell to buyers in one place.</p></div>
-        <ul><li>Marketplace</li><li>Supabase</li></ul>
-      </a></div>
-      <div class="cell s2"><a class="card c-bone" href="#" data-tilt>
-        <span class="glyph" aria-hidden="true">F</span>
-        <div><h3>Fission</h3><p>Website-as-a-service with tiered pricing, so customers get a site without building one.</p></div>
-        <ul><li>HTML/CSS/JS</li><li>Pricing tiers</li></ul>
-      </a></div>
-
-      <div class="cell s2"><a class="card c-teal" href="#" data-tilt>
-        <span class="glyph" aria-hidden="true">P</span>
-        <div><h3>PrimeBase</h3><p>A task platform where people come, complete tasks and earn money.</p></div>
-        <ul><li>Supabase</li><li>Tasks</li><li>Payouts</li></ul>
-      </a></div>
-    </div>
-  </section>
-
-  <section class="stack" id="stack" aria-labelledby="stack-h">
-    <h2 id="stack-h" data-split>What I build with</h2>
-    <p class="sub" data-split>Drag the ring to spin it.</p>
-    <div class="ring" id="ring" role="list" aria-label="Technologies"></div>
-  </section>
-
-  <section class="contact" id="contact" aria-labelledby="contact-h">
-    <h2 id="contact-h" data-split>Have something to build?</h2>
-    <a class="mail rv" id="mail" href="mailto:Johnchibuikedaniel@gmail.com">Johnchibuikedaniel@gmail.com</a>
-    <div class="links rv">
-      <a href="https://www.instagram.com/yhung_presido_" target="_blank" rel="noopener">Instagram</a>
-      <a href="https://www.tiktok.com/@realpresido_01" target="_blank" rel="noopener">TikTok</a>
-    </div>
-  </section>
+  </div>
 </main>
 
-<footer>Daniel</footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-(function(){
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* ---------- name letters ---------- */
-  const nameEl = document.getElementById('name');
-  'Daniel'.split('').forEach((c,i)=>{
-    const s = document.createElement('span');
-    s.className = 'ch'; s.style.setProperty('--i', i); s.textContent = c;
-    s.setAttribute('aria-hidden','true');
-    nameEl.appendChild(s);
-  });
-
-  const shade = document.getElementById('shade');
-
-  /* ---------- pointer state ---------- */
-  const mouse = {x:0,y:0}, ms = {x:0,y:0};
-  addEventListener('pointermove', e=>{
-    mouse.x = e.clientX/innerWidth*2-1;
-    mouse.y = -(e.clientY/innerHeight*2-1);
-  });
-
-  /* ---------- 3D diamond lattice (echoes the monogram pattern on the shirt) ---------- */
-  const canvas = document.getElementById('bg');
-  let renderer, scene, camera, uniforms;
-  const N=18, M=11, SX=2.4, SY=2.4, LAYERS=12, DZ=6;
-  function hash(a,b,c){const s=Math.sin(a*127.1+b*311.7+c*74.7)*43758.5453;return s-Math.floor(s);}
-  function node(i,j,k){
-    return [i*SX+(hash(i,j,k)-.5)*.9, j*SY+(hash(j,k,i)-.5)*.9, -k*DZ+(hash(k,i,j)-.5)*2];
-  }
-  try{
-    renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
-    renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-    renderer.setSize(innerWidth,innerHeight);
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, .1, 200);
-    camera.position.set(0,0,10);
-
-    const pPos=[], pSeed=[], pRed=[], lPos=[], lSeed=[], lRed=[];
-    for(let k=0;k<LAYERS;k++){
-      for(let i=-N;i<=N;i++){
-        for(let j=-M;j<=M;j++){
-          if(((i+j)%2+2)%2) continue;
-          const a = node(i,j,k), sa = hash(i,j,k*3+1);
-          pPos.push(...a); pSeed.push(sa); pRed.push(hash(k,j,i)>.965?1:0);
-          [[1,1],[1,-1]].forEach(([di,dj])=>{
-            const ni=i+di, nj=j+dj;
-            if(ni>N||nj>M||nj<-M) return;
-            const b = node(ni,nj,k), sb = hash(ni,nj,k*3+1);
-            lPos.push(...a,...b); lSeed.push(sa,sb); lRed.push(0,0);
-          });
-        }
-      }
-    }
-    uniforms = {
-      uTime:{value:0}, uAspect:{value:innerWidth/innerHeight},
-      uMouse:{value:new THREE.Vector2()}, uSize:{value:2.2},
-      uPx:{value:Math.min(devicePixelRatio,2)},
-      uCol:{value:new THREE.Color('#cfe0ee')}, uRedCol:{value:new THREE.Color('#e0392f')}
-    };
-    const vert = `
-      uniform float uTime,uAspect,uSize,uPx; uniform vec2 uMouse;
-      attribute float aSeed; attribute float aRed;
-      varying float vA; varying float vRed;
-      void main(){
-        vec3 p = position;
-        p.z += sin(p.x*.35 + uTime*.7 + aSeed*6.283)*.7;
-        p.y += cos(p.x*.22 + p.z*.25 + uTime*.5)*.45;
-        p.x += sin(p.y*.3 + uTime*.4 + aSeed*6.0)*.35;
-        vec4 mv = modelViewMatrix*vec4(p,1.0);
-        float d = -mv.z;
-        vec2 m = uMouse*vec2(uAspect,1.0)*0.5206*d;
-        vec2 dv = mv.xy - m;
-        float f = smoothstep(5.0,0.0,length(dv));
-        mv.xy += normalize(dv+1e-4)*f*1.3;
-        mv.z += f*1.2;
-        vA = (1.0-smoothstep(14.0,50.0,d))*smoothstep(.8,4.0,d);
-        vRed = aRed;
-        gl_PointSize = uSize*uPx*(26.0/d)*(1.0+aRed*1.2);
-        gl_Position = projectionMatrix*mv;
-      }`;
-    const ptsMat = new THREE.ShaderMaterial({
-      uniforms, vertexShader:vert, transparent:true, depthWrite:false,
-      fragmentShader:`
-        uniform vec3 uCol,uRedCol; varying float vA; varying float vRed;
-        void main(){
-          vec2 c = gl_PointCoord-.5; if(length(c)>.5) discard;
-          gl_FragColor = vec4(mix(uCol,uRedCol,vRed), vA*(vRed>.5?1.0:.8));
-        }`
-    });
-    const lineMat = new THREE.ShaderMaterial({
-      uniforms, vertexShader:vert, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
-      fragmentShader:`
-        varying float vA;
-        void main(){ gl_FragColor = vec4(.44,.58,.72, vA*.22); }`
-    });
-    const mk = (pos,seed,red)=>{
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
-      g.setAttribute('aSeed', new THREE.Float32BufferAttribute(seed,1));
-      g.setAttribute('aRed', new THREE.Float32BufferAttribute(red,1));
-      return g;
-    };
-    const points = new THREE.Points(mk(pPos,pSeed,pRed), ptsMat);
-    const lines = new THREE.LineSegments(mk(lPos,lSeed,lRed), lineMat);
-    points.frustumCulled = lines.frustumCulled = false;
-    scene.add(lines, points);
-  }catch(err){
-    renderer = null; /* page still works without WebGL */
-  }
-
-  let scrollP = 0, camZ = 10, last = performance.now();
-  function frame(now){
-    const dt = Math.min((now-last)/1000, .05); last = now;
-    ms.x += (mouse.x-ms.x)*.06; ms.y += (mouse.y-ms.y)*.06;
-
-    /* the lattice gets brighter as you scroll */
-    const t = Math.min(scrollY/(innerHeight*.85), 1);
-    canvas.style.opacity = (.3 + .7*t).toFixed(3);
-
-    if(renderer){
-      const max = document.documentElement.scrollHeight - innerHeight;
-      scrollP = max>0 ? scrollY/max : 0;
-      const target = 10 - scrollP*(LAYERS-1)*DZ*.92;
-      camZ += (target-camZ)*.08;
-      camera.position.z = camZ;
-      camera.position.x = ms.x*.8; camera.position.y = ms.y*.5;
-      camera.rotation.z = reduce ? 0 : scrollP*.5 + ms.x*.03;
-      uniforms.uTime.value += reduce ? dt*.1 : dt;
-      uniforms.uMouse.value.set(ms.x, ms.y);
-      renderer.render(scene,camera);
-    }
-
-    ringTick(dt);
-    requestAnimationFrame(frame);
-  }
-
-  addEventListener('resize', ()=>{
-    if(!renderer) return;
-    renderer.setSize(innerWidth,innerHeight);
-    camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
-    uniforms.uAspect.value = innerWidth/innerHeight;
-    layoutRing();
-  });
-
-  /* ---------- 3D tech ring ---------- */
-  const techs = ['Flutter','Supabase','Paystack','VTPass','PostgreSQL','Edge Functions','Three.js','HTML/CSS/JS','Provider','Godot','Unity','Unreal Engine','GDScript','Blender','Dart','JavaScript'];
-  const hot = new Set(['Supabase','Paystack','Flutter']);
-  const ring = document.getElementById('ring');
-  const items = techs.map(t=>{
-    const el = document.createElement('div');
-    el.className = 'item' + (hot.has(t)?' hot':''); el.textContent = t;
-    el.setAttribute('role','listitem');
-    ring.appendChild(el); return el;
-  });
-  let angle = 0, vel = reduce ? 0 : 8, dragging = false, lastX = 0, R = 360;
-  function layoutRing(){ R = Math.min(380, ring.clientWidth*.36); }
-  function ringTick(dt){
-    if(!dragging){ angle += vel*dt; vel += ((reduce?0:8)-vel)*.02; }
-    const n = items.length;
-    items.forEach((el,i)=>{
-      const a = i*360/n + angle;
-      const c = Math.cos(a*Math.PI/180);
-      el.style.transform = `rotateY(${a}deg) translateZ(${R}px) rotateY(${-a}deg)`;
-      el.style.opacity = (.22 + .78*(c+1)/2).toFixed(3);
-      el.style.zIndex = Math.round((c+1)*50);
-    });
-  }
-  ring.addEventListener('pointerdown', e=>{ dragging=true; lastX=e.clientX; vel=0; ring.setPointerCapture(e.pointerId); });
-  ring.addEventListener('pointermove', e=>{
-    if(!dragging) return;
-    const dx = e.clientX-lastX; lastX = e.clientX;
-    angle += dx*.4; vel = dx*18;
-  });
-  const endDrag = ()=>{ dragging=false; };
-  ring.addEventListener('pointerup', endDrag);
-  ring.addEventListener('pointercancel', endDrag);
-  layoutRing();
-
-  /* ---------- card tilt ---------- */
-  if(matchMedia('(hover:hover)').matches && !reduce){
-    document.querySelectorAll('[data-tilt]').forEach(card=>{
-      card.addEventListener('pointermove', e=>{
-        const r = card.getBoundingClientRect();
-        const x = (e.clientX-r.left)/r.width, y = (e.clientY-r.top)/r.height;
-        card.style.setProperty('--ry', ((x-.5)*14)+'deg');
-        card.style.setProperty('--rx', ((.5-y)*14)+'deg');
-        card.style.setProperty('--mx', (x*100)+'%');
-        card.style.setProperty('--my', (y*100)+'%');
-      });
-      card.addEventListener('pointerleave', ()=>{
-        card.style.setProperty('--rx','0deg'); card.style.setProperty('--ry','0deg');
-      });
-    });
-  }
-
-  /* ---------- project cards settle into place on first view ---------- */
-  const cells = document.querySelectorAll('.cell');
-  if('IntersectionObserver' in window && !reduce){
-    const io = new IntersectionObserver(es=>{
-      es.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
-    },{threshold:.15});
-    cells.forEach((c,i)=>{ c.style.transitionDelay = (i%3*90)+'ms'; io.observe(c); });
-  } else {
-    cells.forEach(c=>c.classList.add('in'));
-  }
-
-  /* ---------- word-by-word text reveal ---------- */
-  function splitWords(root){
-    let n = 0;
-    const walk = node=>{
-      [...node.childNodes].forEach(ch=>{
-        if(ch.nodeType===3){
-          const frag = document.createDocumentFragment();
-          ch.textContent.split(/(\s+)/).forEach(p=>{
-            if(!p) return;
-            if(/^\s+$/.test(p)){ frag.appendChild(document.createTextNode(' ')); return; }
-            const w = document.createElement('span'); w.className='w';
-            const wi = document.createElement('span'); wi.className='wi';
-            wi.style.setProperty('--d', Math.min(n++,14)); wi.textContent = p;
-            w.appendChild(wi); frag.appendChild(w);
-          });
-          ch.replaceWith(frag);
-        } else if(ch.nodeType===1){ walk(ch); }
-      });
-    };
-    walk(root);
-  }
-  const revealEls = [...document.querySelectorAll('[data-split]')];
-  revealEls.forEach(el=>{ el.setAttribute('aria-label', el.textContent.replace(/\s+/g,' ').trim()); splitWords(el); });
-  const rvEls = [...document.querySelectorAll('.rv')];
-  if('IntersectionObserver' in window && !reduce){
-    const io2 = new IntersectionObserver(es=>{
-      es.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('in'); io2.unobserve(en.target); } });
-    },{threshold:.25});
-    [...revealEls, ...rvEls].forEach(el=>io2.observe(el));
-  } else {
-    [...revealEls, ...rvEls].forEach(el=>el.classList.add('in'));
-  }
-
-  /* ---------- rolling text swap on nav links and buttons ---------- */
-  document.querySelectorAll('.nav a.link, .btn').forEach(a=>{
-    const txt = a.textContent.trim(); a.textContent = '';
-    const w = document.createElement('span'); w.className = 'rl';
-    w.innerHTML = '<span class="a"></span><span class="b" aria-hidden="true"></span>';
-    w.querySelector('.a').textContent = txt; w.querySelector('.b').textContent = txt;
-    a.appendChild(w);
-  });
-
-  requestAnimationFrame(frame);
-})();
-</script>
+<footer>
+  <div class="wrap">EarnOva &copy; 2026</div>
+</footer>
 </body>
 </html>
